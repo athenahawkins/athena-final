@@ -3,6 +3,7 @@ title: "Cleaning Data"
 output:
   html_document:
     df_print: paged
+knit: (function(inputFile, encoding) { rmarkdown::render(inputFile, encoding = encoding, output_dir = "docs") })
 ---
 
 ## Goals of this Notebook
@@ -165,7 +166,7 @@ Now I want to adjust my prices for inflation. I'll be using the average yearly C
 ```{r yr}
 f_yrs <- f_merged |>
   mutate(
-    yr = year(date))
+    years = year(date))
 
 f_yrs
 ```
@@ -173,19 +174,28 @@ f_yrs
 Now I'll use the average CPI for all Urban consumers for each year divided by the 2015 CPI and multiplied by each year's prices in order to get a column with prices adjusted to 2015 dollars.
 
 ```{r cpi}
+library(httr)
+library(jsonlite)
+```
 
+```{r}
+# base_url <- "https://mymarketnews.ams.usda.gov/public_data"
+# 
+# info_url <- "cheeseprices"
+# 
+# full_url <- base: :paste0(base_url, info_url)
 ```
 
 
-
 ```{r case_when}
-f_adj <- f_yrs |> 
-  mutate(
-    adj_high_price = case_when(
-      yr == 2000 ~ imported_high_price*237.017/172.2
-    ))
-
-f_adj
+# f_adj <- f_yrs |> 
+#   mutate(
+#     adj_high_price = case_when(
+#       yr == 2000 ~ imported_high_price*237.017/172.2,
+#       # yr == 2001 ~ 
+#     ))
+# 
+# f_adj
 ```
 
 ```{r}

@@ -1896,6 +1896,26 @@ f_yrs</code></pre>
 <p>Now I’ll use the average CPI for all Urban consumers for each year
 divided by the 2015 CPI and multiplied by each year’s prices in order to
 get a column with prices adjusted to 2015 dollars.</p>
+<pre class="r"><code>library(httr)
+library(jsonlite)</code></pre>
+<pre><code>## 
+## Attaching package: &#39;jsonlite&#39;</code></pre>
+<pre><code>## The following object is masked from &#39;package:purrr&#39;:
+## 
+##     flatten</code></pre>
+<pre class="r"><code># base_url &lt;- &quot;https://mymarketnews.ams.usda.gov/public_data&quot;
+# 
+# info_url &lt;- &quot;cheeseprices&quot;
+# 
+# full_url &lt;- base: :paste0(base_url, info_url)</code></pre>
+<pre class="r"><code># f_adj &lt;- f_yrs |&gt; 
+#   mutate(
+#     adj_high_price = case_when(
+#       yr == 2000 ~ imported_high_price*237.017/172.2,
+#       # yr == 2001 ~ 
+#     ))
+# 
+# f_adj</code></pre>
 <pre class="r"><code>f_adj_00 &lt;- f_yrs |&gt; 
   filter(years == 2000) |&gt; 
   mutate(
