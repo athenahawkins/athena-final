@@ -1,0 +1,384 @@
+---
+title: "Cleaning Data"
+output:
+  html_document:
+    df_print: paged
+---
+
+## Goals of this Notebook
+
+- Import all my cheese data
+- Clean names and dates
+- Bind the files together
+- Write the cleaned data
+
+## About the data
+
+I collected data on foreign cheese prices from the [United States Department of Agriculture (USDA)](https://mymarketnews.ams.usda.gov/public_data). The data ranges from 2000 to 2022, but structure of it changed after 2018. From 2000 to 2018, data was aggregated in one sheet. After 2018, the USDA created an API that recorded each year's data individually for each kind of cheese. I'll need to merge these files together.
+
+One thing to note is that I'll be focusing on the import (not domestic) prices for this cheese to see how it trends over time. I also want to note that the price is in dollars per pound. You can also check out these [FAQs](https://mymarketnews.ams.usda.gov/faqs) about USDA market data.
+
+## Setup
+
+I'm loading the tidyverse library and lubridate package so I can clean up my data.
+
+```{r setup}
+library(tidyverse)
+library(lubridate)
+library(dplyr)
+library(janitor)
+```
+
+## Import data
+
+I'm importing all the files here. I'll start with the aggregate file from 2000 to 2018 and filter it so I'm looking at just the foreign type cheese. I'll also remove repeat rows, columns with N/A data and messy data (like some cheeses priced at zero with no quantities). 
+
+Then, I'll fix make sure R can read my dates as dates.
+
+```{r import}
+thru_2018_clean <- read_csv("data-raw/thru_2018.csv") |> 
+  distinct() |> #I'm using this to remove duplicate rows
+  clean_names() |> 
+  filter(
+    region == "FOREIGN", #I only want the foreign cheese
+    imported_low_price > 0, #this will remove prices marked as zero
+    imported_high_price > 0
+  )|>
+  drop_na(
+    imported_low_price, #n/a columns denote domestic prices
+    imported_high_price
+          ) |> 
+  mutate(
+    date = mdy(date)
+  ) |> 
+  select(
+    date, type, imported_low_price, imported_high_price)
+
+thru_2018_clean
+```
+
+Now I'll import the sheet for 2018, filtering the date so it becomes a continuation of the other sheet. I'll also filter the prices to just the import prices and rename the columns so they match up with the respective ones above.
+
+```{r next_import}
+f18 <- read_csv("data-raw/foreign_2018.csv") |> 
+  clean_names() |> 
+    mutate(
+    date = mdy(report_begin_date),
+    type = group,
+    imported_low_price = price_min,
+    imported_high_price = price_max
+  ) |> 
+  filter(
+    date > 08-31-2018, #this is when the other sheet ends
+    application == "Import"
+  )|> 
+  select(
+    date, imported_low_price, imported_high_price, type
+  )
+
+f18 #checking my work
+```
+
+Now I'll clean the data from 2019 to 2022. I don't have to filter the dates on this one. I'll put each year's data into a separate tibble.
+
+```{r import_last}
+f19 <- read_csv("data-raw/foreign_2019.csv") |> 
+  clean_names() |> 
+    mutate(
+    date = mdy(report_begin_date),
+    type = group,
+    imported_low_price = price_min,
+    imported_high_price = price_max
+  ) |> 
+  filter(
+    application == "Import" #to remove domestic prices
+  )|> 
+  select(
+    date, imported_low_price, imported_high_price, type
+  )
+
+f20 <- read_csv("data-raw/foreign_2020.csv") |> 
+  clean_names() |> 
+    mutate(
+    date = mdy(report_begin_date),
+    type = group,
+    imported_low_price = price_min,
+    imported_high_price = price_max
+  ) |> 
+  filter(
+    application == "Import" #to remove domestic prices
+  )|> 
+  select(
+    date, imported_low_price, imported_high_price, type
+  )
+
+f21 <- read_csv("data-raw/foreign_2021.csv") |> 
+  clean_names() |> 
+    mutate(
+    date = mdy(report_begin_date),
+    type = group,
+    imported_low_price = price_min,
+    imported_high_price = price_max
+  ) |> 
+  filter(
+    application == "Import" #to remove domestic prices
+  )|> 
+  select(
+    date, imported_low_price, imported_high_price, type
+  )
+
+f22 <- read_csv("data-raw/foreign_2022.csv") |> 
+  clean_names() |> 
+    mutate(
+    date = mdy(report_begin_date),
+    type = group,
+    imported_low_price = price_min,
+    imported_high_price = price_max
+  ) |> 
+  filter(
+    application == "Import" #to remove domestic prices
+  )|> 
+  select(
+    date, imported_low_price, imported_high_price, type
+  )
+```
+
+## Join the data
+
+Now I'll use bind to stack the rows of my data on top of each other. This way, I can look at all the data for 2000 through 2022 in one place. 
+
+```{r bind}
+f_merged <- thru_2018_clean |> 
+  bind_rows(f18) |> 
+  bind_rows(f19) |> 
+  bind_rows(f20) |>
+  bind_rows(f21) |>
+  bind_rows(f22)
+
+f_merged |> summary() #checking my date range
+```
+
+## Adjust for Inflation
+
+Now I want to adjust my prices for inflation. I'll be using the average yearly CPI from the Bureau of Labor Statistics to calculate each year's prices adjusted to 2015 prices. First, I need to make a year column.
+
+```{r yr}
+f_yrs <- f_merged |>
+  mutate(
+    yr = year(date))
+
+f_yrs
+```
+
+Now I'll use the average CPI for all Urban consumers for each year divided by the 2015 CPI and multiplied by each year's prices in order to get a column with prices adjusted to 2015 dollars.
+
+```{r cpi}
+
+```
+
+
+
+```{r case_when}
+f_adj <- f_yrs |> 
+  mutate(
+    adj_high_price = case_when(
+      yr == 2000 ~ imported_high_price*237.017/172.2
+    ))
+
+f_adj
+```
+
+```{r}
+f_adj_00 <- f_yrs |> 
+  filter(years == 2000) |> 
+  mutate(
+    adj_high_price = imported_high_price*237.017/172.2,
+    adj_low_price = imported_low_price*237.017/172.2
+         )
+  
+f_adj_01 <- f_yrs |> 
+  filter(years == 2001) |> 
+  mutate(
+    adj_high_price = imported_high_price*237.017/177.1,
+    adj_low_price = imported_low_price*237.017/177.1
+         )
+  
+f_adj_02 <- f_yrs |> 
+  filter(years == 2002) |> 
+  mutate(
+    adj_high_price = imported_high_price*237.017/179.9,
+    adj_low_price = imported_low_price*237.017/179.9
+         )
+  
+f_adj_03 <- f_yrs |> 
+  filter(years == 2003) |> 
+  mutate(
+    adj_high_price = imported_high_price*237.017/184,
+    adj_low_price = imported_low_price*237.017/184
+         )
+  
+f_adj_04 <- f_yrs |> 
+  filter(years == 2004) |> 
+  mutate(
+    adj_high_price = imported_high_price*237.017/188.9,
+    adj_low_price = imported_low_price*237.017/188.9
+         )
+  
+f_adj_05 <- f_yrs |> 
+  filter(years == 2005) |> 
+  mutate(
+    adj_high_price = imported_high_price*237.017/195.3,
+    adj_low_price = imported_low_price*237.017/195.3
+         )
+  
+f_adj_06 <- f_yrs |> 
+  filter(years == 2006) |> 
+  mutate(
+    adj_high_price = imported_high_price*237.017/201.6,
+    adj_low_price = imported_low_price*237.017/201.6
+         )
+  
+f_adj_07 <- f_yrs |> 
+  filter(years == 2007) |> 
+  mutate(
+    adj_high_price = imported_high_price*237.017/207.3,
+    adj_low_price = imported_low_price*237.017/207.3
+         )
+  
+f_adj_08 <- f_yrs |> 
+  filter(years == 2008) |> 
+  mutate(
+    adj_high_price = imported_high_price*237.017/215.3,
+    adj_low_price = imported_low_price*237.017/215.3,
+         )
+f_adj_09 <- f_yrs |> 
+  filter(years == 2009) |> 
+  mutate(
+    adj_high_price = imported_high_price*237.017/214.5,
+    adj_low_price = imported_low_price*237.017/214.5,
+         )
+f_adj_10 <- f_yrs |> 
+  filter(years == 2010) |> 
+  mutate(
+    adj_high_price = imported_high_price*237.017/218.1,
+    adj_low_price = imported_low_price*237.017/218.1,
+         )
+f_adj_11 <- f_yrs |> 
+  filter(years == 2011) |> 
+  mutate(
+    adj_high_price = imported_high_price*237.017/224.9,
+    adj_low_price = imported_low_price*237.017/224.9,
+         )
+f_adj_12 <- f_yrs |> 
+  filter(years == 2012) |> 
+  mutate(
+    adj_high_price = imported_high_price*237.017/229.6,
+    adj_low_price = imported_low_price*237.017/229.6
+         )
+f_adj_13 <- f_yrs |> 
+  filter(years == 2013) |> 
+  mutate(
+    adj_high_price = imported_high_price*237.017/233,
+    adj_low_price = imported_low_price*237.017/233
+         )
+  
+f_adj_14 <- f_yrs |> 
+  filter(years == 2014) |> 
+  mutate(
+    adj_high_price = imported_high_price*237.017/236.7,
+    adj_low_price = imported_low_price*237.017/236.7
+         )
+
+f_adj_15 <- f_yrs |> 
+  filter(years == 2015) |> 
+  mutate(
+    adj_high_price = imported_high_price*237.017/237.0,
+    adj_low_price = imported_low_price*237.017/237.0
+         )
+
+f_adj_16 <- f_yrs |> 
+  filter(years == 2016) |> 
+  mutate(
+    adj_high_price = imported_high_price*237.017/240,
+    adj_low_price = imported_low_price*237.017/240
+         )
+
+f_adj_17 <- f_yrs |> 
+  filter(years == 2017) |> 
+  mutate(
+    adj_high_price = imported_high_price*237.017/245.1,
+    adj_low_price = imported_low_price*237.017/245.1
+         )
+
+f_adj_18 <- f_yrs |> 
+  filter(years == 2018) |> 
+  mutate(
+    adj_high_price = imported_high_price*237.017/251.1,
+    adj_low_price = imported_low_price*237.017/251.1
+         )
+
+f_adj_19 <- f_yrs |> 
+  filter(years == 2019) |> 
+  mutate(
+    adj_high_price = imported_high_price*237.017/255.7,
+    adj_low_price = imported_low_price*237.017/255.7
+         )
+
+f_adj_20 <- f_yrs |> 
+  filter(years == 2020) |> 
+  mutate(
+    adj_high_price = imported_high_price*237.017/258.8,
+    adj_low_price = imported_low_price*237.017/258.8
+         )
+
+f_adj_21 <- f_yrs |> 
+  filter(years == 2021) |> 
+  mutate(
+    adj_high_price = imported_high_price*237.017/271,
+    adj_low_price = imported_low_price*237.017/271
+         )
+
+f_adj_22 <- f_yrs |> 
+  filter(years == 2022) |> 
+  mutate(
+    adj_high_price = imported_high_price*237.017/294.4,
+    adj_low_price = imported_low_price*237.017/294.4
+         )
+```
+
+Now I'll bind all that data together again.
+
+```{r}
+f_adj_merged <- f_adj_00 |> 
+  bind_rows(f_adj_01) |> 
+  bind_rows(f_adj_02) |>
+  bind_rows(f_adj_03) |>
+  bind_rows(f_adj_04) |>
+  bind_rows(f_adj_05) |>
+  bind_rows(f_adj_06) |>
+  bind_rows(f_adj_07) |>
+  bind_rows(f_adj_08) |>
+  bind_rows(f_adj_09) |>
+  bind_rows(f_adj_10) |>
+  bind_rows(f_adj_11) |>
+  bind_rows(f_adj_12) |>
+  bind_rows(f_adj_13) |>
+  bind_rows(f_adj_14) |>
+  bind_rows(f_adj_15) |>
+  bind_rows(f_adj_16) |>
+  bind_rows(f_adj_17) |>
+  bind_rows(f_adj_18) |>
+  bind_rows(f_adj_19) |>
+  bind_rows(f_adj_20) |>
+  bind_rows(f_adj_21) |>
+  bind_rows(f_adj_22)
+
+
+f_adj_merged |> summary() #checking my date range
+```
+
+## Export my data
+
+```{r export}
+f_adj_merged |> write_rds("data-processed/01-cleaning.rds")
+```
