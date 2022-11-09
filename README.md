@@ -12,4 +12,5 @@ knit: (function(inputFile, encoding) { rmarkdown::render(
 
 ### This is my final project for now.
 
-- [cleaning notebook](https://athenahawkins.github.io/athena-final/01-cleaning.html)
+- [Cleaning notebook](https://athenahawkins.github.io/athena-final/01-cleaning.html)
+- [Analysis/Visuals notebook](https://athenahawkins.github.io/athena-final/02-analysis.html)
