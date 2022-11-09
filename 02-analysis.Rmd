@@ -1,0 +1,127 @@
+---
+title: "Cheese Analysis"
+output:
+  html_document:
+    df_print: paged
+---
+
+## Goals of this Notebook
+
+- Analyze my cheese data
+- Look for trends
+- Create monthly and yearly averages
+- Create a searchable table
+
+## About the data
+
+This is [USDA](http://rmarkdown.rstudio.com) price data on domestic cheeses that I've collected, cleaned, merged and adjusted for inflation.
+
+## Setup
+
+```{r setup}
+library(tidyverse)
+library(lubridate)
+library(dplyr)
+```
+
+## Import data
+
+I'm importing my cleaned data here.
+
+```{r import}
+chs_clean <- readRDS("data-processed/01-cleaning.rds")
+
+chs_clean |> summary() #check my columns
+```
+
+## Find average prices
+
+```{r}
+avg_adj_prices <- chs_clean |> 
+  mutate(adj_avg_price = (adj_high_price + adj_low_price)/2,
+         avg_price = (low_price + high_price)/2)
+
+avg_adj_prices
+```
+
+## Find yearly average highs and lows
+
+I want to get the average high price and average low price for all domestic cheese by year. 
+
+```{r avg}
+chs_averages <- chs_clean |> 
+  group_by(yr) |> 
+  summarize(average_yearly_low = mean(low_price),
+            average_yearly_high = mean(high_price),
+            adj_yearly_high = mean(adj_high_price),
+            adj_yearly_low = mean(adj_low_price)
+  ) |> 
+  arrange()
+
+chs_averages
+```
+
+## Cheddar Cheese Average Plot
+
+```{r american}
+ched_avg <- chs_clean |> 
+  filter(type == "CHEDDAR")) |> 
+  group_by(yr) |> 
+  summarize(average_yearly_low = mean(low_price),
+            average_yearly_high = mean(high_price),
+            adj_yearly_high = mean(adj_high_price),
+            adj_yearly_low = mean(adj_low_price)
+  ) |> 
+  arrange()
+
+ched_avg
+```
+
+Now I'll plot the data.
+
+```{r}
+ggplot(ched_avg, aes(x=yr)) + 
+  geom_line(aes(y=adj_yearly_high, color="High Price")) + 
+  geom_line(aes(y=adj_yearly_low, color="Low Price")) +
+  labs(title = "Cheddar Cheese Prices Decrease Over Time", 
+       x = "Year", y = "Price of Cheddar Cheese (in 2015 dollars")
+```
+
+## Facet Wrap All Cheeses
+
+```{r}
+facet <- avg_adj_prices |> 
+  group_by(yr, type) |> 
+  summarize(avg_price) |> 
+  group_by(yr, type) |> 
+  summarize(avg_yearly_price = mean(avg_price)) |>
+  arrange()
+
+facet
+```
+
+
+```{r}
+facet_plot <- ggplot(facet, aes(x = yr, y = avg_yearly_price)) + 
+  geom_point(aes(color = type)) +
+  geom_line(aes(color = type)) +
+  labs(title = "Yearly Domestic Cheese Prices (in 2015 dollars)", 
+       x = "Year", y = "Price of Domestic Cheese")
+
+facet_plot
+```
+
+
+```{r}
+separate_plot <- facet_plot +
+  facet_wrap(~ type) +
+  theme(legend.position = "none")
+
+separate_plot
+```
+
+```{r}
+ggsave("plot1.pdf", plot=separate_plot, width=12, height=8)
+```
+
+

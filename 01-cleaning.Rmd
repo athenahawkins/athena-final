@@ -68,10 +68,19 @@ cheese_dirty <- list_of_files |>
 cheese_dirty
 ```
 
+Now I'll fix my names. In one data fram they are all uppercase, so I'll make sure it matches.
+
+```{r names}
+cheese_names <- cheese_dirty |> 
+  mutate_if(is.character, str_to_upper)
+
+cheese_names
+```
+
 Now I'll get rid of unnecessary columns and fix my dates. I'll also filter the date range so it will pick up where the other sheet left off.
 
 ```{r clean_data}
-cheese_clean <- cheese_dirty |> 
+cheese_clean <- cheese_names |> 
   clean_names() |> 
     mutate(
     date = mdy(report_begin_date),
@@ -80,11 +89,11 @@ cheese_clean <- cheese_dirty |>
     type = group
 ) |> 
   filter(date > 02-05-2018,
-         application == "Domestic" #to remove foreign cheese
+         application == "DOMESTIC" #to remove foreign cheese
 ) |> 
   select(date, region, low_price, high_price, type)
 
-cheese_clean |> glimpse()
+cheese_clean
 ```
 
 Now I'll bind my 2000 to 2018 data with my data from 2018 on.
@@ -167,6 +176,7 @@ adj_cheese <- cheese_yrs |>
 
 adj_cheese |> summary() #checking columns
 ```
+
 ## Export my data
 
 ```{r export}
