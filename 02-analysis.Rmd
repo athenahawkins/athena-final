@@ -7,9 +7,8 @@ output:
 
 ## Goals of this Notebook
 
-- Analyze my cheese data
-- Look for trends
-- Look at yearly averages
+- Look for trends in my cheese data
+- Answer questions with yearly averages by region and type
 - Play with visualizations
 
 I want to explore my data by answering the following questions:
@@ -43,6 +42,12 @@ chs_clean |> summary() #check my columns
 ```
 
 ## High and low average prices
+
+```{r}
+chs_clean |> 
+  filter(yr == 2018)
+```
+
 
 ```{r avg_unadj}
 chs_clean |> 
@@ -142,5 +147,3 @@ separate_plot
 ```{r}
 ggsave("plot1.pdf", plot=separate_plot, width=12, height=8)
 ```
-
-
