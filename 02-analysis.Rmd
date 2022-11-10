@@ -3,6 +3,7 @@ title: "Cheese Analysis"
 output:
   html_document:
     df_print: paged
+knit: (function(inputFile, encoding) { rmarkdown::render(inputFile, encoding = encoding, output_dir = "docs") })
 ---
 
 ## Goals of this Notebook
@@ -15,6 +16,8 @@ I want to explore my data by answering the following questions:
 
 - Which year had the highest average cheese price? Which had the lowest?
 - Which year had the highest average cheese price in 2015 dollars? Which year had the lowest price in 2015 dollars?
+- Which year had the highest cheese storage holdings, on average? Which had the lowest?
+- Which week in the data had the highest cheese storage holdings? Which week had the lowest?
 - For each region, which year had the highest average cheese price? Which year had the lowest?
 - For each region, which year had the highest average cheese price in 2015 dollars? Which year had the lowest price in 2015 dollars?
 - For 2000 through 2022, which month of the year had the highest cheese prices? Which had the lowest?
@@ -37,26 +40,18 @@ I'm importing my cleaned data here.
 
 ```{r import}
 chs_clean <- readRDS("data-processed/01-cleaning.rds")
-
-chs_clean |> summary() #check my columns
+storage_clean <- readRDS("data-processed/01-storage.rds")
 ```
 
-## High and low average prices
-
-```{r}
-chs_clean |> 
-  filter(yr == 2018)
-```
-
+## High and low averages
 
 ```{r avg_unadj}
 chs_clean |> 
   group_by(yr) |> 
   summarize(avg_high = mean(high_price)
-  ) |>
+) |>
   arrange(avg_high |> desc())
 ```
-
 
 ## Find average prices
 
