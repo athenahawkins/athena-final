@@ -9,12 +9,20 @@ output:
 
 - Analyze my cheese data
 - Look for trends
-- Create monthly and yearly averages
-- Create a searchable table
+- Look at yearly averages
+- Play with visualizations
+
+I want to explore my data by answering the following questions:
+
+- Which year had the highest average cheese price? Which had the lowest?
+- Which year had the highest average cheese price in 2015 dollars? Which year had the lowest price in 2015 dollars?
+- For each region, which year had the highest average cheese price? Which year had the lowest?
+- For each region, which year had the highest average cheese price in 2015 dollars? Which year had the lowest price in 2015 dollars?
+- For 2000 through 2022, which month of the year had the highest cheese prices? Which had the lowest?
 
 ## About the data
 
-This is [USDA](http://rmarkdown.rstudio.com) price data on domestic cheeses that I've collected, cleaned, merged and adjusted for inflation.
+This is [USDA](http://rmarkdown.rstudio.com) price data on domestic cheeses that I've collected, cleaned and adjusted for inflation.
 
 ## Setup
 
@@ -34,6 +42,17 @@ chs_clean <- readRDS("data-processed/01-cleaning.rds")
 chs_clean |> summary() #check my columns
 ```
 
+## High and low average prices
+
+```{r avg_unadj}
+chs_clean |> 
+  group_by(yr) |> 
+  summarize(avg_high = mean(high_price)
+  ) |>
+  arrange(avg_high |> desc())
+```
+
+
 ## Find average prices
 
 ```{r}
@@ -46,7 +65,7 @@ avg_adj_prices
 
 ## Find yearly average highs and lows
 
-I want to get the average high price and average low price for all domestic cheese by year. 
+I want to get the average high price and average low price for all domestic cheese by year.
 
 ```{r avg}
 chs_averages <- chs_clean |> 

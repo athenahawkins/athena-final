@@ -10,7 +10,6 @@ knit: (function(inputFile, encoding) { rmarkdown::render(inputFile, encoding = e
 
 - Import all my cheese data
 - Clean names and dates
-- Bind the files together
 - Write the cleaned data
 
 ## About the data
@@ -28,31 +27,14 @@ library(tidyverse)
 library(lubridate)
 library(dplyr)
 library(janitor)
+library(tidyr)
 ```
 
 ## Import data
 
-I'll import my first file here, which ranges from January 2000 to February 2018. I'll filter it so I'm looking at just the domestic cheese. I'll also remove repeated rows.
+I'll import all my files here, which range from January 2000 to November 2022. These reports fall under three regional categories, including Western U.S. cheese, Northeastern U.S. cheese and Midwestern U.S. cheese.
 
-Then, I'll fix my dates so R reads them as dates.
-
-```{r first_import}
-thru_2018_clean <- read_csv("data-raw/thru_2018.csv") |> 
-  distinct() |> #I'm using this to remove duplicate rows
-  clean_names() |> 
-  filter(
-    region != "FOREIGN" #I don't want the foreign cheese
-    ) |> 
-  mutate(
-    date = mdy(date)
-  ) |> 
-  select(
-    date, type, high_price, low_price, region)
-
-thru_2018_clean |> glimpse()
-```
-
-Now I'll import all the sheets that came after 2018. I put the midwest, northeast and west files for each year following 2018 in a folder called file-list and import them all here.
+I downloaded each files from an API and put them in a folder called file list. I'll import and bind all the files into one tibble using the list.files function.
 
 ```{r list_import}
 list_of_files <- list.files(path = "file-list", recursive = TRUE,
@@ -65,51 +47,41 @@ cheese_dirty <- list_of_files |>
   purrr::map_df(read_csv, 
                 col_names = TRUE) #sets names
 
-cheese_dirty
+cheese_dirty |> summary()
 ```
 
-Now I'll fix my names. In one data fram they are all uppercase, so I'll make sure it matches.
+## Clean data
+
+Now it's time to clean my data. I'll use mutate.if to change all the character values to upper case letters so I can search easily later on. I'll also clean up my column names. Then, I'll change the names of some of my columns to make it easier for me to analyze.
+
+Finally, I'll select the columns I need for my analysis so I don't have to worry about the other ones. 
 
 ```{r names}
-cheese_names <- cheese_dirty |> 
-  mutate_if(is.character, str_to_upper)
-
-cheese_names
-```
-
-Now I'll get rid of unnecessary columns and fix my dates. I'll also filter the date range so it will pick up where the other sheet left off.
-
-```{r clean_data}
-cheese_clean <- cheese_names |> 
-  clean_names() |> 
-    mutate(
+cheese_clean <- cheese_dirty |> 
+  mutate_if(
+    is.character, str_to_upper
+) |> 
+  clean_names(
+) |>
+  mutate(
     date = mdy(report_begin_date),
-    low_price = price_min,
     high_price = price_max,
+    low_price = price_min,
     type = group
 ) |> 
-  filter(date > 02-05-2018,
-         application == "DOMESTIC" #to remove foreign cheese
-) |> 
-  select(date, region, low_price, high_price, type)
+  select(
+    date, region, package, high_price, low_price, type
+  )
 
-cheese_clean
+cheese_clean #checking column names
 ```
 
-Now I'll bind my 2000 to 2018 data with my data from 2018 on.
-
-```{r bind_rows}
-all_cheese <- cheese_clean |> 
-  bind_rows(thru_2018_clean)
-
-all_cheese |> summary() #check my date range
-```
-## Adjust for Inflation
+## Adjust for inflation
 
 Now I want to adjust my prices for inflation. I'll be using the [average yearly Consumer Price Index for Urban Consumers, or CPI-U](https://www.bls.gov/bls/archived_sched.htm) from the Bureau of Labor Statistics to calculate each year's cheese prices adjusted to 2015 dollars. First, I need to make a year column.
 
 ```{r yr}
-cheese_yrs <- all_cheese |>
+cheese_yrs <- cheese_clean |>
   mutate(
     yr = year(date))
 
@@ -175,6 +147,22 @@ adj_cheese <- cheese_yrs |>
     ))
 
 adj_cheese |> summary() #checking columns
+```
+
+## Remove bad row
+
+First, I spoke with an expert on USDA reports about one row with an N/A price from 2018 - he said this row is a repeat leftover from combining reports.
+
+I'll find that row here and get rid of it.
+
+```{r}
+adj_cheese |> 
+  filter(is.na(low_price)) #check to make sure only one row in this column has an N/A value
+
+clean_adj_cheese <- adj_cheese |> 
+  drop_na() #removes all N/A rows
+
+clean_adj_cheese #check to make sure there is only one fewer row in the data
 ```
 
 ## Export my data
