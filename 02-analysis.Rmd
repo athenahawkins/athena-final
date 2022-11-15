@@ -15,9 +15,9 @@ knit: (function(inputFile, encoding) { rmarkdown::render(inputFile, encoding = e
 I want to explore my data by answering the following questions:
 
 - Which year had the highest average cheese price? Which had the lowest?
-- Which year had the highest average prices in 2015 dollars? Which had the lowest?
-- Which month out of the year the highest average cheese prices in 2015 dollars? I'll group by year and month, then month again to get this answer.
-- What were the monthly avarage prices for each type of cheese in 2021?
+- Which year had the highest average prices in 2021 dollars? Which had the lowest?
+- Which month out of the year the highest average cheese prices in 2021 dollars? I'll group by year and month, then month again to get this answer.
+- What were the monthly average prices for each type of cheese in 2021?
 - Last year, which month had the highest total cheese prices?
 - Which year had the highest cheese storage holdings, on average? Which had the lowest?
 - Which week in the data had the highest cheese storage holdings? Which week had the lowest?
@@ -77,9 +77,9 @@ chs_with_avg |>
 
 2014 had the highest average cheese price, not adjusted for inflation, with all cheese packages averaging a price of $2.81 per pound in that years dollars.
 
-2000 had the lowest average total cheese price in our data set, which was not adjusted for inflation, with an average minimum price of $1.49 per pound.
+2000 had the lowest average total cheese price in our data set, which was not adjusted for inflation, with an average minimum price of $1.65 per pound.
 
-### Which year had the highest cheese prices in 2015 dollars? Which had the lowest?
+### Which year had the highest cheese prices in 2021 dollars? Which had the lowest?
 
 I'll use the same logic here to find the highest total adjusted prices by year, but I'll sum the adjusted column instead.
 
@@ -92,7 +92,7 @@ chs_with_avg |>
   arrange(adj_yr_price |> desc())
 ```
 
-2014 still had the highest total cheese prices after adjusting for inflation. The average price was 3.21 dollars per pound in 2015 dollars. 
+2014 still had the highest total cheese prices after adjusting for inflation. The average price was 3.21 dollars per pound in 2021 dollars. 
 
 The second highest year changed after adjusting for inflation, from 2022 with 2.79 dollars per pound to 2008 with 3.10 dollars per pound.
 
@@ -127,7 +127,7 @@ October saw the highest average cheese prices in our data, with an average price
 
 ### 2021 prices
 
-I want to look at 2021 prices (not adjusted for inflation) for each type of cheese.
+I want to look at 2021 prices for each type of cheese.
 
 ```{r lastyear}
 chs_mnths |>
@@ -155,7 +155,7 @@ chs_mnths |>
 )
 ```
 
-December 2021 saw the highest average total cheese price for that year, with an average price of 2.54 per pound, adjusted for inflation.
+December 2021 saw the highest average total cheese price for that year, with an average price of 2.54 per pound.
 
 ### Swiss prices by year
 
@@ -172,7 +172,7 @@ chs_clean |>
   arrange(yrly_adj_high_price |> desc())
 ```
 
-2014 had the highest average maximum swiss cheese price after adjusting for inflation, with 3.84 dollars per pound in 2015 dollars.
+2014 had the highest average maximum swiss cheese price after adjusting for inflation, with 3.84 dollars per pound in 2021 dollars.
 
 The average high price for swiss was around 90 cents lower in 2018, with an adjusted price of 2.95 dollars per pound.
 
@@ -240,7 +240,7 @@ ggplot(swiss_avg, aes(x=yr)) +
   geom_line(aes(y=adj_yearly_high, color="High Price")) + 
   geom_line(aes(y=adj_yearly_low, color="Low Price")) +
   labs(title = "Swiss Cheese Prices Over Time", 
-       x = "Year", y = "Price per pound (in 2015 dollars)")
+       x = "Year", y = "Price per pound (in 2021 dollars)")
 ```
 
 ### Facet Wrap All Cheeses, Adjusted
@@ -307,8 +307,11 @@ unadj_facet
 ```
 
 
-```{r facet_save}
+```{r plot_save}
 ggsave("plot1.pdf", plot=separate_plot, width=12, height=8)
+```
+```{r facet_save}
+ggsave("plot2.pdf", plot=facet_plot, width=12, height=8)
 ```
 
 ## Lede draft

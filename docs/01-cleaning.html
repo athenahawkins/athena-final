@@ -2465,62 +2465,62 @@ cheese_yrs |&gt; summary()</code></pre>
 ##                     3rd Qu.:2016  
 ##                     Max.   :2022  
 ## </code></pre>
-<p>Now I’ll divide the average CPI for each year by the 2015 CPI. Then,
+<p>Now I’ll divide the average CPI for each year by the 2021 CPI. Then,
 I’ll multiply it by each price in order to get a column where every
-price in my datast is adjusted to 2015 dollars.</p>
+price in my data set is adjusted to 2021 dollars.</p>
 <p>A CPI estimate for 2022 is based on the change in the CPI from first
 quarter 2021 to first quarter 2022.</p>
 <pre class="r"><code>adj_cheese &lt;- cheese_yrs |&gt;
   mutate(
     adj_high_price = case_when(
-      yr == 2000 ~ high_price*237.017/172.2,
-      yr == 2001 ~ high_price*237.017/177.1,
-      yr == 2002 ~ high_price*237.017/179.9,
-      yr == 2003 ~ high_price*237.017/184.0,
-      yr == 2004 ~ high_price*237.017/188.9,
-      yr == 2005 ~ high_price*237.017/195.3,
-      yr == 2006 ~ high_price*237.017/201.6,
-      yr == 2007 ~ high_price*237.017/207.3,
-      yr == 2008 ~ high_price*237.017/215.3,
-      yr == 2009 ~ high_price*237.017/214.3,
-      yr == 2010 ~ high_price*237.017/218.1,
-      yr == 2011 ~ high_price*237.017/224.9,
-      yr == 2012 ~ high_price*237.017/229.6,
-      yr == 2013 ~ high_price*237.017/233.0,
-      yr == 2014 ~ high_price*237.017/236.7,
-      yr == 2015 ~ high_price*237.017/237.0,
-      yr == 2016 ~ high_price*237.017/240.0,
-      yr == 2017 ~ high_price*237.017/245.1,
-      yr == 2018 ~ high_price*237.017/251.1,
-      yr == 2019 ~ high_price*237.017/255.7,
-      yr == 2020 ~ high_price*237.017/258.8,
-      yr == 2021 ~ high_price*237.017/271.0,
-      yr == 2022 ~ high_price*237.017/294.4
+      yr == 2000 ~ high_price*271.0/172.2,
+      yr == 2001 ~ high_price*271.0/177.1,
+      yr == 2002 ~ high_price*271.0/179.9,
+      yr == 2003 ~ high_price*271.0/184.0,
+      yr == 2004 ~ high_price*271.0/188.9,
+      yr == 2005 ~ high_price*271.0/195.3,
+      yr == 2006 ~ high_price*271.0/201.6,
+      yr == 2007 ~ high_price*271.0/207.3,
+      yr == 2008 ~ high_price*271.0/215.3,
+      yr == 2009 ~ high_price*271.0/214.3,
+      yr == 2010 ~ high_price*271.0/218.1,
+      yr == 2011 ~ high_price*271.0/224.9,
+      yr == 2012 ~ high_price*271.0/229.6,
+      yr == 2013 ~ high_price*271.0/233.0,
+      yr == 2014 ~ high_price*271.0/236.7,
+      yr == 2015 ~ high_price*271.0/237.0,
+      yr == 2016 ~ high_price*271.0/240.0,
+      yr == 2017 ~ high_price*271.0/245.1,
+      yr == 2018 ~ high_price*271.0/251.1,
+      yr == 2019 ~ high_price*271.0/255.7,
+      yr == 2020 ~ high_price*271.0/258.8,
+      yr == 2021 ~ high_price*271.0/271.0,
+      yr == 2022 ~ high_price*271.0/294.4
       ),
   adj_low_price = case_when(
-      yr == 2000 ~ low_price*237.017/172.2,
-      yr == 2001 ~ low_price*237.017/177.1,
-      yr == 2002 ~ low_price*237.017/179.9,
-      yr == 2003 ~ low_price*237.017/184.0,
-      yr == 2004 ~ low_price*237.017/188.9,
-      yr == 2005 ~ low_price*237.017/195.3,
-      yr == 2006 ~ low_price*237.017/201.6,
-      yr == 2007 ~ low_price*237.017/207.3,
-      yr == 2008 ~ low_price*237.017/215.3,
-      yr == 2009 ~ low_price*237.017/214.3,
-      yr == 2010 ~ low_price*237.017/218.1,
-      yr == 2011 ~ low_price*237.017/224.9,
-      yr == 2012 ~ low_price*237.017/229.6,
-      yr == 2013 ~ low_price*237.017/233.0,
-      yr == 2014 ~ low_price*237.017/236.7,
-      yr == 2015 ~ low_price*237.017/237.0,
-      yr == 2016 ~ low_price*237.017/240.0,
-      yr == 2017 ~ low_price*237.017/245.1,
-      yr == 2018 ~ low_price*237.017/251.1,
-      yr == 2019 ~ low_price*237.017/255.7,
-      yr == 2020 ~ low_price*237.017/258.8,
-      yr == 2021 ~ low_price*237.017/271.0,
-      yr == 2022 ~ low_price*237.017/294.4
+      yr == 2000 ~ low_price*271.0/172.2,
+      yr == 2001 ~ low_price*271.0/177.1,
+      yr == 2002 ~ low_price*271.0/179.9,
+      yr == 2003 ~ low_price*271.0/184.0,
+      yr == 2004 ~ low_price*271.0/188.9,
+      yr == 2005 ~ low_price*271.0/195.3,
+      yr == 2006 ~ low_price*271.0/201.6,
+      yr == 2007 ~ low_price*271.0/207.3,
+      yr == 2008 ~ low_price*271.0/215.3,
+      yr == 2009 ~ low_price*271.0/214.3,
+      yr == 2010 ~ low_price*271.0/218.1,
+      yr == 2011 ~ low_price*271.0/224.9,
+      yr == 2012 ~ low_price*271.0/229.6,
+      yr == 2013 ~ low_price*271.0/233.0,
+      yr == 2014 ~ low_price*271.0/236.7,
+      yr == 2015 ~ low_price*271.0/237.0,
+      yr == 2016 ~ low_price*271.0/240.0,
+      yr == 2017 ~ low_price*271.0/245.1,
+      yr == 2018 ~ low_price*271.0/251.1,
+      yr == 2019 ~ low_price*271.0/255.7,
+      yr == 2020 ~ low_price*271.0/258.8,
+      yr == 2021 ~ low_price*271.0/271.0,
+      yr == 2022 ~ low_price*271.0/294.4
     ))
 
 adj_cheese |&gt; summary() #checking columns</code></pre>
@@ -2532,14 +2532,30 @@ adj_cheese |&gt; summary() #checking columns</code></pre>
 ##  3rd Qu.:2016-06-13                      3rd Qu.:2.685   3rd Qu.:2.268  
 ##  Max.   :2022-11-07                      Max.   :6.612   Max.   :4.290  
 ##                                          NA&#39;s   :1       NA&#39;s   :1      
-##      type                 yr       adj_high_price  adj_low_price   
-##  Length:22367       Min.   :2000   Min.   :1.255   Min.   :0.9746  
-##  Class :character   1st Qu.:2003   1st Qu.:2.131   1st Qu.:1.7962  
-##  Mode  :character   Median :2009   Median :2.498   Median :2.0610  
-##                     Mean   :2010   Mean   :2.583   Mean   :2.1738  
-##                     3rd Qu.:2016   3rd Qu.:2.948   3rd Qu.:2.4891  
-##                     Max.   :2022   Max.   :5.324   Max.   :4.1981  
+##      type                 yr       adj_high_price  adj_low_price  
+##  Length:22367       Min.   :2000   Min.   :1.435   Min.   :1.114  
+##  Class :character   1st Qu.:2003   1st Qu.:2.437   1st Qu.:2.054  
+##  Mode  :character   Median :2009   Median :2.856   Median :2.357  
+##                     Mean   :2010   Mean   :2.953   Mean   :2.486  
+##                     3rd Qu.:2016   3rd Qu.:3.370   3rd Qu.:2.846  
+##                     Max.   :2022   Max.   :6.087   Max.   :4.800  
 ##                                    NA&#39;s   :1       NA&#39;s   :1</code></pre>
+</div>
+<div id="checking-my-prices-with-a-calculator" class="section level3">
+<h3>Checking my prices with a calculator</h3>
+<p>Using this <a href="https://www.minneapolisfed.org/about-us/monetary-policy/inflation-calculator">inflation
+calculator</a> from the Minneapolis Federal Reserve Bank website, I want
+to make sure I did this right by checking my adjusted prices from 2005
+to 2021.</p>
+<pre class="r"><code>adj_cheese |&gt; 
+  filter(yr == 2005) |&gt; 
+  head(5)</code></pre>
+<div data-pagedtable="false">
+<script data-pagedtable-source type="application/json">
+{"columns":[{"label":["date"],"name":[1],"type":["date"],"align":["right"]},{"label":["region"],"name":[2],"type":["chr"],"align":["left"]},{"label":["high_price"],"name":[3],"type":["dbl"],"align":["right"]},{"label":["low_price"],"name":[4],"type":["dbl"],"align":["right"]},{"label":["type"],"name":[5],"type":["chr"],"align":["left"]},{"label":["yr"],"name":[6],"type":["dbl"],"align":["right"]},{"label":["adj_high_price"],"name":[7],"type":["dbl"],"align":["right"]},{"label":["adj_low_price"],"name":[8],"type":["dbl"],"align":["right"]}],"data":[{"1":"2005-12-26","2":"WISCONSIN","3":"2.265","4":"1.77","5":"CHEDDAR","6":"2005","7":"3.142934","8":"2.456068"},{"1":"2005-12-26","2":"WISCONSIN","3":"1.890","4":"1.67","5":"PROCESS AMERICAN","6":"2005","7":"2.622581","8":"2.317307"},{"1":"2005-12-26","2":"WISCONSIN","3":"2.890","4":"2.43","5":"SWISS","6":"2005","7":"4.010189","8":"3.371889"},{"1":"2005-12-26","2":"WISCONSIN","3":"2.000","4":"1.88","5":"BRICK","6":"2005","7":"2.775218","8":"2.608705"},{"1":"2005-12-26","2":"WISCONSIN","3":"2.265","4":"1.92","5":"MONTEREY JACK","6":"2005","7":"3.142934","8":"2.664209"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
+  </script>
+</div>
+<p>I tested these prices and the inflation checks out!</p>
 </div>
 <div id="remove-one-bad-row" class="section level3">
 <h3>Remove one bad row</h3>
@@ -2566,8 +2582,8 @@ clean_adj_cheese |&gt; glimpse() #check to make sure there is only one fewer row
 ## $ low_price      &lt;dbl&gt; 1.4700, 1.1425, 1.1325, 1.3325, 2.0950, 1.4700, 1.6700,…
 ## $ type           &lt;chr&gt; &quot;CHEDDAR&quot;, &quot;CHEDDAR&quot;, &quot;CHEDDAR&quot;, &quot;PROCESS AMERICAN&quot;, &quot;S…
 ## $ yr             &lt;dbl&gt; 2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000, 2…
-## $ adj_high_price &lt;dbl&gt; 2.911097, 1.641363, 1.575984, 2.037080, 3.695648, 2.391…
-## $ adj_low_price  &lt;dbl&gt; 2.023316, 1.572543, 1.558779, 1.834060, 2.883569, 2.023…</code></pre>
+## $ adj_high_price &lt;dbl&gt; 3.328484, 1.876699, 1.801945, 2.329152, 4.225523, 2.734…
+## $ adj_low_price  &lt;dbl&gt; 2.313415, 1.798011, 1.782274, 2.097024, 3.297009, 2.313…</code></pre>
 </div>
 </div>
 <div id="import-storage-data" class="section level2">

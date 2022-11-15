@@ -90,7 +90,7 @@ cheese_yrs <- cheese_clean |>
 cheese_yrs |> summary()
 ```
 
-Now I'll divide the average CPI for each year by the 2015 CPI. Then,  I'll multiply it by each price in order to get a column where every price in my datast is adjusted to 2015 dollars.
+Now I'll divide the average CPI for each year by the 2021 CPI. Then,  I'll multiply it by each price in order to get a column where every price in my data set is adjusted to 2021 dollars.
 
 A CPI estimate for 2022 is based on the change in the CPI from first quarter 2021 to first quarter 2022.
 
