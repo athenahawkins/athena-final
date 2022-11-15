@@ -72,7 +72,7 @@ cheese_clean <- cheese_dirty |>
     type = group
 ) |> 
   select(
-    date, region, package, high_price, low_price, type
+    date, region, high_price, low_price, type
   )
 
 cheese_clean #checking column names
@@ -98,58 +98,70 @@ A CPI estimate for 2022 is based on the change in the CPI from first quarter 202
 adj_cheese <- cheese_yrs |>
   mutate(
     adj_high_price = case_when(
-      yr == 2000 ~ high_price*237.017/172.2,
-      yr == 2001 ~ high_price*237.017/177.1,
-      yr == 2002 ~ high_price*237.017/179.9,
-      yr == 2003 ~ high_price*237.017/184.0,
-      yr == 2004 ~ high_price*237.017/188.9,
-      yr == 2005 ~ high_price*237.017/195.3,
-      yr == 2006 ~ high_price*237.017/201.6,
-      yr == 2007 ~ high_price*237.017/207.3,
-      yr == 2008 ~ high_price*237.017/215.3,
-      yr == 2009 ~ high_price*237.017/214.3,
-      yr == 2010 ~ high_price*237.017/218.1,
-      yr == 2011 ~ high_price*237.017/224.9,
-      yr == 2012 ~ high_price*237.017/229.6,
-      yr == 2013 ~ high_price*237.017/233.0,
-      yr == 2014 ~ high_price*237.017/236.7,
-      yr == 2015 ~ high_price*237.017/237.0,
-      yr == 2016 ~ high_price*237.017/240.0,
-      yr == 2017 ~ high_price*237.017/245.1,
-      yr == 2018 ~ high_price*237.017/251.1,
-      yr == 2019 ~ high_price*237.017/255.7,
-      yr == 2020 ~ high_price*237.017/258.8,
-      yr == 2021 ~ high_price*237.017/271.0,
-      yr == 2022 ~ high_price*237.017/294.4
+      yr == 2000 ~ high_price*271.0/172.2,
+      yr == 2001 ~ high_price*271.0/177.1,
+      yr == 2002 ~ high_price*271.0/179.9,
+      yr == 2003 ~ high_price*271.0/184.0,
+      yr == 2004 ~ high_price*271.0/188.9,
+      yr == 2005 ~ high_price*271.0/195.3,
+      yr == 2006 ~ high_price*271.0/201.6,
+      yr == 2007 ~ high_price*271.0/207.3,
+      yr == 2008 ~ high_price*271.0/215.3,
+      yr == 2009 ~ high_price*271.0/214.3,
+      yr == 2010 ~ high_price*271.0/218.1,
+      yr == 2011 ~ high_price*271.0/224.9,
+      yr == 2012 ~ high_price*271.0/229.6,
+      yr == 2013 ~ high_price*271.0/233.0,
+      yr == 2014 ~ high_price*271.0/236.7,
+      yr == 2015 ~ high_price*271.0/237.0,
+      yr == 2016 ~ high_price*271.0/240.0,
+      yr == 2017 ~ high_price*271.0/245.1,
+      yr == 2018 ~ high_price*271.0/251.1,
+      yr == 2019 ~ high_price*271.0/255.7,
+      yr == 2020 ~ high_price*271.0/258.8,
+      yr == 2021 ~ high_price*271.0/271.0,
+      yr == 2022 ~ high_price*271.0/294.4
       ),
   adj_low_price = case_when(
-      yr == 2000 ~ low_price*237.017/172.2,
-      yr == 2001 ~ low_price*237.017/177.1,
-      yr == 2002 ~ low_price*237.017/179.9,
-      yr == 2003 ~ low_price*237.017/184.0,
-      yr == 2004 ~ low_price*237.017/188.9,
-      yr == 2005 ~ low_price*237.017/195.3,
-      yr == 2006 ~ low_price*237.017/201.6,
-      yr == 2007 ~ low_price*237.017/207.3,
-      yr == 2008 ~ low_price*237.017/215.3,
-      yr == 2009 ~ low_price*237.017/214.3,
-      yr == 2010 ~ low_price*237.017/218.1,
-      yr == 2011 ~ low_price*237.017/224.9,
-      yr == 2012 ~ low_price*237.017/229.6,
-      yr == 2013 ~ low_price*237.017/233.0,
-      yr == 2014 ~ low_price*237.017/236.7,
-      yr == 2015 ~ low_price*237.017/237.0,
-      yr == 2016 ~ low_price*237.017/240.0,
-      yr == 2017 ~ low_price*237.017/245.1,
-      yr == 2018 ~ low_price*237.017/251.1,
-      yr == 2019 ~ low_price*237.017/255.7,
-      yr == 2020 ~ low_price*237.017/258.8,
-      yr == 2021 ~ low_price*237.017/271.0,
-      yr == 2022 ~ low_price*237.017/294.4
+      yr == 2000 ~ low_price*271.0/172.2,
+      yr == 2001 ~ low_price*271.0/177.1,
+      yr == 2002 ~ low_price*271.0/179.9,
+      yr == 2003 ~ low_price*271.0/184.0,
+      yr == 2004 ~ low_price*271.0/188.9,
+      yr == 2005 ~ low_price*271.0/195.3,
+      yr == 2006 ~ low_price*271.0/201.6,
+      yr == 2007 ~ low_price*271.0/207.3,
+      yr == 2008 ~ low_price*271.0/215.3,
+      yr == 2009 ~ low_price*271.0/214.3,
+      yr == 2010 ~ low_price*271.0/218.1,
+      yr == 2011 ~ low_price*271.0/224.9,
+      yr == 2012 ~ low_price*271.0/229.6,
+      yr == 2013 ~ low_price*271.0/233.0,
+      yr == 2014 ~ low_price*271.0/236.7,
+      yr == 2015 ~ low_price*271.0/237.0,
+      yr == 2016 ~ low_price*271.0/240.0,
+      yr == 2017 ~ low_price*271.0/245.1,
+      yr == 2018 ~ low_price*271.0/251.1,
+      yr == 2019 ~ low_price*271.0/255.7,
+      yr == 2020 ~ low_price*271.0/258.8,
+      yr == 2021 ~ low_price*271.0/271.0,
+      yr == 2022 ~ low_price*271.0/294.4
     ))
 
 adj_cheese |> summary() #checking columns
 ```
+
+### Checking my prices with a calculator
+
+Using this [inflation calculator](https://www.minneapolisfed.org/about-us/monetary-policy/inflation-calculator) from the Minneapolis Federal Reserve Bank website, I want to make sure I did this right by checking my adjusted prices from 2005 to 2021.
+
+```{r check_calc}
+adj_cheese |> 
+  filter(yr == 2005) |> 
+  head(5)
+```
+
+I tested these prices and the inflation checks out!
 
 ### Remove one bad row
 
@@ -185,6 +197,8 @@ storage_dirty |> summary()
 
 ### Clean storage data
 
+I'll fix names and make sure I'm looking at only cheese, and not butter, holdings.
+
 ```{r}
 storage_clean <- storage_dirty |>
   clean_names() |> 
@@ -206,6 +220,6 @@ storage_clean
 ## Export my data
 
 ```{r export}
-adj_cheese |> write_rds("data-processed/01-cleaning.rds")
+clean_adj_cheese |> write_rds("data-processed/01-cleaning.rds")
 storage_clean |> write_rds("data-processed/01-storage.rds")
 ```
