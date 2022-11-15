@@ -75,7 +75,7 @@ cheese_clean <- cheese_dirty |>
     date, region, high_price, low_price, type
   )
 
-cheese_clean #checking column names
+cheese_clean |> summary() #checking column names
 ```
 
 ### Adjust prices for inflation

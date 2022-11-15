@@ -20,6 +20,6 @@ knit: (function(inputFile, encoding) { rmarkdown::render(
 
 [Analysis/Visuals notebook](https://athenahawkins.github.io/athena-final/02-analysis.html)
 
-- I'm still working on my analysis notebook.
+- I'm still working on creating visualizations in my analysis notebook.
 
-- [This plot](https://github.com/athenahawkins/athena-final/blob/main/plot2.pdf) shows types of cheese and their prices over time, adjusted for inflation.
+- I created [this visualization](https://github.com/athenahawkins/athena-final/blob/main/plot2.pdf) for each types of cheese and their prices over time, adjusted for inflation.
