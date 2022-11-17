@@ -14,6 +14,7 @@ knit: (function(inputFile, encoding) { rmarkdown::render(inputFile, encoding = e
 
 I want to explore my data by answering the following questions:
 
+- What's going on in 2022? How have prices changed? How has cheese storage changed?
 - Which year had the highest average cheese price? Which had the lowest?
 - Which year had the highest average prices in 2021 dollars? Which had the lowest?
 - Which month out of the year the highest average cheese prices in 2021 dollars? I'll group by year and month, then month again to get this answer.
@@ -46,7 +47,7 @@ chs_clean <- readRDS("data-processed/01-cleaning.rds")
 storage_clean <- readRDS("data-processed/01-storage.rds")
 ```
 
-## Create average price column
+### Create average price column
 
 Right now each row of my data has a corresponding high and low price for each week. I'll want a column that takes the average of those two prices for each week so I can get yearly averages. 
 
@@ -58,6 +59,15 @@ chs_with_avg <- chs_clean |>
 )
 
 chs_with_avg |> glimpse()
+```
+
+### Creating a month column
+
+I also need to create a month column.
+
+```{r month_column}
+chs_mnths <- chs_with_avg |> 
+  mutate(month_nm = month(date, label = TRUE)) #makes a month column
 ```
 
 ## Average total prices per year
@@ -78,6 +88,25 @@ chs_with_avg |>
 2014 had the highest average cheese price, not adjusted for inflation, with all cheese packages averaging a price of $2.81 per pound in that years dollars.
 
 2000 had the lowest average total cheese price in our data set, which was not adjusted for inflation, with an average minimum price of $1.65 per pound.
+
+### 2022 prices by Month
+
+```{r thisyear_price}
+thisyear_price <- chs_mnths |> 
+  filter(yr == 2022) |> 
+  group_by(date) |> 
+  summarize(avg_price = mean(total_avg_price))
+
+thisyear_price
+```
+
+```{r thisyear_plot}
+ggplot(thisyear_price, aes(x = date, y = avg_price)) +
+  geom_line() +
+  labs(title = "2022 Cheese Prices", color = "Price",
+       x = "Month", y = "Price per pound (in 2021 dollars)")
+```
+
 
 ### Which year had the highest cheese prices in 2021 dollars? Which had the lowest?
 
@@ -196,7 +225,7 @@ chs_clean |>
 ### Which year had the highest cheese storage holdings, on average? Which had the lowest?
 
 ```{r storage}
-storage_clean |> 
+storage_yrly <- storage_clean |> 
   group_by(yr) |> 
   summarize(avg_yrly_holding = mean(holdings_current_lbs)) |> 
   arrange(avg_yrly_holding |> desc())
@@ -215,7 +244,40 @@ storage_clean |>
 ```
 July 2004 saw the greatest storage holdings, with over 150 million pounds of cheese. 
 
-## Playing with plots
+## Playing with visualizations
+
+### Storage over time plot
+
+```{r yearly_storage}
+ggplot(storage_yrly, aes(x=yr)) + 
+  geom_line(aes(y=avg_yrly_holding, color="avg_yrly_holding")) + 
+  labs(title = "National Cheese Storage Holdings Over Time", 
+       x = "Year", y = "Pounds of Cheese")
+```
+
+### 2022 Storage Plot
+
+```{r monthly_storage}
+storage_monthly <- storage_clean |> 
+  filter(yr == 2022) |> 
+  mutate(stor_month = month(date, label = TRUE)) |> 
+  group_by(stor_month) |> 
+  summarize(mnthly_lbs = mean(holdings_current_lbs)) |> 
+  arrange()
+
+storage_monthly
+```
+
+### 2022 Storage Plot
+
+```{r storage_recent_plot}
+ggplot(storage_monthly, aes(x=stor_month, y = mnthly_lbs)) + 
+  geom_col() + 
+  coord_flip()
+  labs(title = "National Cheese Storage Holdings in 2022", 
+       x = "Year", y = "Pounds of Cheese")
+```
+
 
 ### Swiss cheese plot
 
@@ -310,6 +372,7 @@ unadj_facet
 ```{r plot_save}
 ggsave("plot1.pdf", plot=separate_plot, width=12, height=8)
 ```
+
 ```{r facet_save}
 ggsave("plot2.pdf", plot=facet_plot, width=12, height=8)
 ```
