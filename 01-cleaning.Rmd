@@ -181,40 +181,35 @@ clean_adj_cheese |> glimpse() #check to make sure there is only one fewer row in
 
 ## Import storage data
 
-```{r}
-storage_files <- list.files(path = "storage", recursive = TRUE,
-                            pattern = "\\.csv$", 
-                            full.names = TRUE) #imports the file list
-
-storage_dirty <- storage_files |> 
-  purrr::set_names(nm = (basename("storage") |>  tools::file_path_sans_ext())
-) |> 
-  purrr::map_df(read_csv, 
-                col_names = TRUE) #sets names
-
-storage_dirty |> summary()
+```{r import_storage}
+storage_dirty <- read_csv("data-raw/comprehensive_storage.csv")
 ```
 
 ### Clean storage data
 
-I'll fix names and make sure I'm looking at only cheese, and not butter, holdings.
-
-```{r}
-storage_clean <- storage_dirty |>
+```{r clean_storage}
+storage_clean <- storage_dirty |> 
   clean_names() |> 
-  mutate_if(
-    is.character, str_to_upper
-) |> 
-  filter(
-    commodity == "CHEESE"
-) |> 
   mutate(
-    date = mdy(report_begin_date),
-    yr = (year(date))
+    month_names = case_when(
+      period == "END OF JAN" ~ "Jan",
+      period == "END OF FEB" ~ "Feb",
+      period == "END OF MAR" ~ "Mar",
+      period == "END OF APR" ~ "Apr",
+      period == "END OF MAY" ~ "May",
+      period == "END OF JUN" ~ "Jun",
+      period == "END OF JUL" ~ "Jul",
+      period == "END OF AUG" ~ "Aug",
+      period == "END OF JAN" ~ "Sep",
+      period == "END OF JAN" ~ "Oct",
+      period == "END OF JAN" ~ "Nov",
+      period == "END OF JAN" ~ "Dec")
 ) |> 
-  select(date, yr, holdings_current_lbs, market_location_name)
+  mutate(month_use = as.factor(month_names)
+) |> 
+  select(month_use, data_item, value, year)
 
-storage_clean
+storage_clean |> glimpse()
 ```
 
 ## Export my data

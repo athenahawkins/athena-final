@@ -17,12 +17,8 @@ I want to explore my data by answering the following questions:
 - What's going on in 2022? How have prices changed? How has cheese storage changed?
 - Which year had the highest average cheese price? Which had the lowest?
 - Which year had the highest average prices in 2021 dollars? Which had the lowest?
-- Which month out of the year the highest average cheese prices in 2021 dollars? I'll group by year and month, then month again to get this answer.
-- What were the monthly average prices for each type of cheese in 2021?
 - Last year, which month had the highest total cheese prices?
 - Which year had the highest cheese storage holdings, on average? Which had the lowest?
-- Which week in the data had the highest cheese storage holdings? Which week had the lowest?
-
 
 ## About the data
 
@@ -36,6 +32,8 @@ Storage holdings data is in units of pounds.
 library(tidyverse)
 library(lubridate)
 library(dplyr)
+library(ggthemes)
+library(scales)
 ```
 
 ## Import data
@@ -61,7 +59,7 @@ chs_with_avg <- chs_clean |>
 chs_with_avg |> glimpse()
 ```
 
-### Creating a month column
+### Create a month column
 
 I also need to create a month column.
 
@@ -70,14 +68,14 @@ chs_mnths <- chs_with_avg |>
   mutate(month_nm = month(date, label = TRUE)) #makes a month column
 ```
 
-## Average total prices per year
+## Price analysis
 
 ### Which year had the highest average total cheese prices, not adjusted for inflation? Which had the lowest?
 
 I'll group by year, which will put all the rows for each year together. Then I'll use the sum(mean) function to get the average of the total price column I just created for each year.
 
 ```{r unadj_yearly}
-chs_with_avg |> 
+chs_with_avg_plot <- chs_with_avg |> 
   group_by(yr) |> 
   summarize(
     total_yr_price = mean(total_avg_price)
@@ -89,21 +87,36 @@ chs_with_avg |>
 
 2000 had the lowest average total cheese price in our data set, which was not adjusted for inflation, with an average minimum price of $1.65 per pound.
 
-### 2022 prices by Month
+I'll chart this data here. 
+
+```{r unadj_yearly_chart}
+ggplot(chs_with_avg_plot, aes(x=yr)) + 
+  geom_line(aes(y=total_yr_price)) + 
+  labs(title = "Domestic Cheese Prices Over Time", 
+       x = "Year", y = "Average Price of Cheese (dollars per pound)")
+```
+
+### 2022 prices
+
+Let's see what the prices for all cheeses on average looked visually this year.
 
 ```{r thisyear_price}
 thisyear_price <- chs_mnths |> 
   filter(yr == 2022) |> 
-  group_by(date) |> 
+  group_by(date) |>  
   summarize(avg_price = mean(total_avg_price))
 
 thisyear_price
 ```
 
+Now I'll plot the data.
+
 ```{r thisyear_plot}
 ggplot(thisyear_price, aes(x = date, y = avg_price)) +
-  geom_line() +
-  labs(title = "2022 Cheese Prices", color = "Price",
+  geom_line(aes(color = "pink")) +
+  theme_classic() +
+  theme(legend.position = "none") +
+  labs(title = "Domestic cheese prices rise and fall in 2022", color = "Price",
        x = "Month", y = "Price per pound (in 2021 dollars)")
 ```
 
@@ -113,13 +126,26 @@ ggplot(thisyear_price, aes(x = date, y = avg_price)) +
 I'll use the same logic here to find the highest total adjusted prices by year, but I'll sum the adjusted column instead.
 
 ```{r adj_yearly}
-chs_with_avg |> 
+yearly_highest <- chs_with_avg |> 
   group_by(yr) |> 
   summarize(
     adj_yr_price = mean(total_price_adj)
 ) |>
   arrange(adj_yr_price |> desc())
 ```
+
+Now I'll plot it.
+
+```{r highest_price_year_plot}
+ggplot(yearly_highest, aes(x = yr, y = adj_yr_price)) +
+  geom_point(aes(color = "pink")) +
+  geom_line(aes(color = "pink")) +
+  theme_classic() +
+  theme(legend.position = "none") +
+  labs(title = "Total average domestic cheese prices fluctuate over time", color = "Price",
+       x = "Year", y = "Price per pound (in 2021 dollars)")
+```
+
 
 2014 still had the highest total cheese prices after adjusting for inflation. The average price was 3.21 dollars per pound in 2021 dollars. 
 
@@ -154,7 +180,7 @@ chs_mnths |>
 
 October saw the highest average cheese prices in our data, with an average price of 2.83 dollars per pound in 2021 dollars.
 
-### 2021 prices
+### Last year's prices (2021)
 
 I want to look at 2021 prices for each type of cheese.
 
@@ -186,29 +212,39 @@ chs_mnths |>
 
 December 2021 saw the highest average total cheese price for that year, with an average price of 2.54 per pound.
 
-### Swiss prices by year
+### Swiss Cheese
 
 I want to look at just Swiss prices, so I'll filter by data to Swiss and look at means again.
 
-```{r swiss_by_year}
-chs_clean |> 
-  filter(type == "SWISS") |> 
+```{r swiss}
+swiss_avg <- chs_clean |> 
+  filter(str_detect(type, "SWISS")) |> 
   group_by(yr) |> 
-  summarize(
-    yrly_adj_high_price = mean(adj_high_price),
-    yrly_adj_low_price = mean(adj_low_price)
-) |> 
-  arrange(yrly_adj_high_price |> desc())
+  summarize(average_yearly_low = mean(low_price),
+            average_yearly_high = mean(high_price),
+            adj_yearly_high = mean(adj_high_price),
+            adj_yearly_low = mean(adj_low_price)
+  ) |> 
+  arrange()
+
+swiss_avg
 ```
 
-2014 had the highest average maximum swiss cheese price after adjusting for inflation, with 3.84 dollars per pound in 2021 dollars.
+Now I'll plot the data.
 
-The average high price for swiss was around 90 cents lower in 2018, with an adjusted price of 2.95 dollars per pound.
+```{r swiss_plot}
+ggplot(swiss_avg, aes(x=yr)) + 
+  geom_line(aes(y=adj_yearly_high, color="High Price")) + 
+  geom_line(aes(y=adj_yearly_low, color="Low Price")) +
+  theme(legend.position = "none") +
+  labs(title = "Swiss Cheese Prices Over Time", 
+       x = "Year", y = "Price per pound (in 2021 dollars)")
+```
 
-### Muenster prices by year
+### Muenster prices
 
 ```{r cheddar}
-chs_clean |> 
+muenster <- chs_clean |> 
   filter(type == "MUENSTER") |> 
   group_by(yr) |> 
   summarize(
@@ -225,37 +261,37 @@ chs_clean |>
 ### Which year had the highest cheese storage holdings, on average? Which had the lowest?
 
 ```{r storage}
-storage_yrly <- storage_clean |> 
-  group_by(yr) |> 
-  summarize(avg_yrly_holding = mean(holdings_current_lbs)) |> 
+storage_yrly <- storage_clean |>
+  filter(
+    data_item == "CHEESE, NATURAL, COLD STORAGE, CHILLED - STOCKS, MEASURED IN LB"
+) |> 
+  group_by(year) |> 
+  summarize(
+    avg_yrly_holding = mean(value)
+) |> 
   arrange(avg_yrly_holding |> desc())
+
+storage_yrly |> summary()
 ```
 
-2005 had the highest average cheese storage holdings, with over 136 million pounds of cheese stored by the U.S. government. 
+2022 had the highest average cheese storage holdings, with over 1.48 billion pounds of cheese stored by the U.S. government. 
 
-2020 had the lowest average storage holdings, with over 78 million.
+2001 had the lowest average storage holdings in our data, with just over 700 million pounds stored.
 
-### Which week in the data had the highest cheese storage holdings? Which week had the lowest?
-
-```{r storage_highs}
-storage_clean |> 
-  arrange(holdings_current_lbs |> desc()) |> 
-  head(10)
-```
-July 2004 saw the greatest storage holdings, with over 150 million pounds of cheese. 
-
-## Playing with visualizations
-
-### Storage over time plot
+### Plot storage over time
 
 ```{r yearly_storage}
-ggplot(storage_yrly, aes(x=yr)) + 
-  geom_line(aes(y=avg_yrly_holding, color="avg_yrly_holding")) + 
-  labs(title = "National Cheese Storage Holdings Over Time", 
+ggplot(storage_yrly, aes(x=year)) + 
+  geom_line(aes(y=avg_yrly_holding)) + 
+  scale_y_continuous(labels = unit_format(unit = "B", scale = 1e-9)) + #changes y-axis units into billions
+  theme(legend.position = "none") +
+  labs(title = "National Cheese Storage Holdings Rise Over Time",
+       subtitle = str_wrap("Government"),
+       caption = "By Athena Hawkins",
        x = "Year", y = "Pounds of Cheese")
 ```
 
-### 2022 Storage Plot
+### Plot 2022 Storage
 
 ```{r monthly_storage}
 storage_monthly <- storage_clean |> 
@@ -379,4 +415,4 @@ ggsave("plot2.pdf", plot=facet_plot, width=12, height=8)
 
 ## Lede draft
 
-Domestic U.S. cheese prices peaked in 2014, reaching an average of $2.81 per pound, according to an analysis of U.S.D.A. data that ranged from 2000 to 2022 and adjusted for inflation. The same year year, the U.S. government stored over 90 million pounds of cheese in Madison, Wisconsin.  
+National cheese storage holdings have increased for the fifth year straight, according to U.S.D.A data.
