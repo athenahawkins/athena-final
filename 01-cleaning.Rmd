@@ -14,11 +14,11 @@ knit: (function(inputFile, encoding) { rmarkdown::render(inputFile, encoding = e
 
 ## About the data
 
-I collected cheese price data from the [United States Department of Agriculture (USDA)](https://mymarketnews.ams.usda.gov/public_data). It ranges from 2000 to 2022, and covers the region categories of Wisconsin, Western U.S., Midwestern U.S. and the  Northeastern U.S. region.
+I collected cheese price data from the [United States Department of Agriculture (USDA)](https://mymarketnews.ams.usda.gov/public_data). It ranges from 2000 to 2022, and covers the region categories of Wisconsin, Western U.S., Midwestern U.S. and the  Northeastern U.S. region. The prices are in units of dollars per pound.
 
-In addition to price data, I want to look at USDA data on the government's cheese storage holdings. I'll import that here and use it to compare in my analysis.
+In addition to price data, I want to look at USDA data on the government's cheese storage holdings. I'll import that here and use it to compare in my analysis. Storage holdings data is in units of pounds, and comes from the USDA National Agricultural Statistics Service [Cold Storage Report](https://quickstats.nass.usda.gov/results/172E17CF-AD11-37D8-949A-0624FA6A9CD0).
 
-The prices come in dollars per pound. You check out these [FAQs](https://mymarketnews.ams.usda.gov/faqs) about USDA market data.
+You check out these [FAQs](https://mymarketnews.ams.usda.gov/faqs) about USDA market data.
 
 ## Setup
 
@@ -200,10 +200,10 @@ storage_clean <- storage_dirty |>
       period == "END OF JUN" ~ "Jun",
       period == "END OF JUL" ~ "Jul",
       period == "END OF AUG" ~ "Aug",
-      period == "END OF JAN" ~ "Sep",
-      period == "END OF JAN" ~ "Oct",
-      period == "END OF JAN" ~ "Nov",
-      period == "END OF JAN" ~ "Dec")
+      period == "END OF SEP" ~ "Sep",
+      period == "END OF OCT" ~ "Oct",
+      period == "END OF NOV" ~ "Nov",
+      period == "END OF DEC" ~ "Dec")
 ) |> 
   mutate(month_use = as.factor(month_names)
 ) |> 

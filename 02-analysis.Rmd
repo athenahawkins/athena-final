@@ -10,21 +10,32 @@ knit: (function(inputFile, encoding) { rmarkdown::render(inputFile, encoding = e
 
 - Look for trends in data
 - Answer questions and find averages
-- Play with visualizations
+- Create visualizations
 
 I want to explore my data by answering the following questions:
 
-- What's going on in 2022? How have prices changed? How has cheese storage changed?
+### Price Questions:
+
 - Which year had the highest average cheese price? Which had the lowest?
-- Which year had the highest average prices in 2021 dollars? Which had the lowest?
-- Last year, which month had the highest total cheese prices?
+- Which year had the highest average prices after adjusting for inflation (in 2021 dollars)? Which had the lowest?
+- In which month was the price of cheese the highest, on average (inflation adjusted)?
+- What were the 2021 prices for each type of cheese?
+- What were the average 2021 cheese prices for each month?
+- What were the average 2021 cheese prices for each month?
+
+### Storage Questions:
+
 - Which year had the highest cheese storage holdings, on average? Which had the lowest?
+- 
+
+### Visualizations:
+
 
 ## About the data
 
 This is [USDA](http://rmarkdown.rstudio.com) price data on domestic cheeses that I've collected, cleaned and adjusted for inflation.
 
-Storage holdings data is in units of pounds.
+Storage holdings data is in units of pounds. The storage holding data comes from the USDA National Agricultural Statistics Service [Cold Storage Report](https://quickstats.nass.usda.gov/results/172E17CF-AD11-37D8-949A-0624FA6A9CD0).
 
 ## Setup
 
@@ -32,8 +43,8 @@ Storage holdings data is in units of pounds.
 library(tidyverse)
 library(lubridate)
 library(dplyr)
-library(ggthemes)
 library(scales)
+library(ggthemes)
 ```
 
 ## Import data
@@ -59,7 +70,7 @@ chs_with_avg <- chs_clean |>
 chs_with_avg |> glimpse()
 ```
 
-### Create a month column
+### Create month column
 
 I also need to create a month column.
 
@@ -68,14 +79,14 @@ chs_mnths <- chs_with_avg |>
   mutate(month_nm = month(date, label = TRUE)) #makes a month column
 ```
 
-## Price analysis
+## Price Data Analysis
 
 ### Which year had the highest average total cheese prices, not adjusted for inflation? Which had the lowest?
 
 I'll group by year, which will put all the rows for each year together. Then I'll use the sum(mean) function to get the average of the total price column I just created for each year.
 
 ```{r unadj_yearly}
-chs_with_avg_plot <- chs_with_avg |> 
+chs_with_avg |> 
   group_by(yr) |> 
   summarize(
     total_yr_price = mean(total_avg_price)
@@ -85,67 +96,20 @@ chs_with_avg_plot <- chs_with_avg |>
 
 2014 had the highest average cheese price, not adjusted for inflation, with all cheese packages averaging a price of $2.81 per pound in that years dollars.
 
-2000 had the lowest average total cheese price in our data set, which was not adjusted for inflation, with an average minimum price of $1.65 per pound.
-
-I'll chart this data here. 
-
-```{r unadj_yearly_chart}
-ggplot(chs_with_avg_plot, aes(x=yr)) + 
-  geom_line(aes(y=total_yr_price)) + 
-  labs(title = "Domestic Cheese Prices Over Time", 
-       x = "Year", y = "Average Price of Cheese (dollars per pound)")
-```
-
-### 2022 prices
-
-Let's see what the prices for all cheeses on average looked visually this year.
-
-```{r thisyear_price}
-thisyear_price <- chs_mnths |> 
-  filter(yr == 2022) |> 
-  group_by(date) |>  
-  summarize(avg_price = mean(total_avg_price))
-
-thisyear_price
-```
-
-Now I'll plot the data.
-
-```{r thisyear_plot}
-ggplot(thisyear_price, aes(x = date, y = avg_price)) +
-  geom_line(aes(color = "pink")) +
-  theme_classic() +
-  theme(legend.position = "none") +
-  labs(title = "Domestic cheese prices rise and fall in 2022", color = "Price",
-       x = "Month", y = "Price per pound (in 2021 dollars)")
-```
-
+2000 had the lowest average total cheese price in my data, which was not adjusted for inflation, with an average minimum price of $1.65 per pound.
 
 ### Which year had the highest cheese prices in 2021 dollars? Which had the lowest?
 
 I'll use the same logic here to find the highest total adjusted prices by year, but I'll sum the adjusted column instead.
 
 ```{r adj_yearly}
-yearly_highest <- chs_with_avg |> 
+chs_with_avg |> 
   group_by(yr) |> 
   summarize(
     adj_yr_price = mean(total_price_adj)
 ) |>
   arrange(adj_yr_price |> desc())
 ```
-
-Now I'll plot it.
-
-```{r highest_price_year_plot}
-ggplot(yearly_highest, aes(x = yr, y = adj_yr_price)) +
-  geom_point(aes(color = "pink")) +
-  geom_line(aes(color = "pink")) +
-  theme_classic() +
-  theme(legend.position = "none") +
-  labs(title = "Total average domestic cheese prices fluctuate over time", color = "Price",
-       x = "Year", y = "Price per pound (in 2021 dollars)")
-```
-
 
 2014 still had the highest total cheese prices after adjusting for inflation. The average price was 3.21 dollars per pound in 2021 dollars. 
 
@@ -155,14 +119,7 @@ The second highest year changed after adjusting for inflation, from 2022 with 2.
 
 ### In which month was the price of cheese the highest, on average?
 
-First, I need to create a month column.
-
-```{r month_column}
-chs_mnths <- chs_with_avg |> 
-  mutate(month_nm = month(date, label = TRUE)) #makes a month column
-```
-
-Now, I'll group by year and month, then month again to get the monthly average for all years.
+I'll group by year and month, then month again to get the monthly average for all years.
 
 ```{r monthly}
 chs_mnths |> 
@@ -180,7 +137,7 @@ chs_mnths |>
 
 October saw the highest average cheese prices in our data, with an average price of 2.83 dollars per pound in 2021 dollars.
 
-### Last year's prices (2021)
+### 2021 prices
 
 I want to look at 2021 prices for each type of cheese.
 
@@ -212,39 +169,51 @@ chs_mnths |>
 
 December 2021 saw the highest average total cheese price for that year, with an average price of 2.54 per pound.
 
-### Swiss Cheese
+### 2022 prices
+
+Now I want to find the monthly average prices for this year, not adjusted for inflation.
+
+```{r thisyear_price}
+thisyear_price <- chs_mnths |> 
+  filter(yr == 2022) |> 
+  group_by(date) |> 
+  summarize(avg_price = mean(total_avg_price))
+
+thisyear_price
+```
+
+I want to plot this on a line.
+
+```{r thisyear_plot}
+ggplot(thisyear_price, aes(x = date, y = avg_price)) +
+  geom_line() +
+  labs(title = "2022 Cheese Prices", color = "Price",
+       x = "Month", y = "Price per pound (in 2021 dollars)")
+```
+
+### Swiss prices by year
 
 I want to look at just Swiss prices, so I'll filter by data to Swiss and look at means again.
 
-```{r swiss}
-swiss_avg <- chs_clean |> 
-  filter(str_detect(type, "SWISS")) |> 
+```{r swiss_by_year}
+chs_clean |> 
+  filter(type == "SWISS") |> 
   group_by(yr) |> 
-  summarize(average_yearly_low = mean(low_price),
-            average_yearly_high = mean(high_price),
-            adj_yearly_high = mean(adj_high_price),
-            adj_yearly_low = mean(adj_low_price)
-  ) |> 
-  arrange()
-
-swiss_avg
+  summarize(
+    yrly_adj_high_price = mean(adj_high_price),
+    yrly_adj_low_price = mean(adj_low_price)
+) |> 
+  arrange(yrly_adj_high_price |> desc())
 ```
 
-Now I'll plot the data.
+2014 had the highest average maximum swiss cheese price after adjusting for inflation, with 3.84 dollars per pound in 2021 dollars.
 
-```{r swiss_plot}
-ggplot(swiss_avg, aes(x=yr)) + 
-  geom_line(aes(y=adj_yearly_high, color="High Price")) + 
-  geom_line(aes(y=adj_yearly_low, color="Low Price")) +
-  theme(legend.position = "none") +
-  labs(title = "Swiss Cheese Prices Over Time", 
-       x = "Year", y = "Price per pound (in 2021 dollars)")
-```
+The average high price for swiss was around 90 cents lower in 2018, with an adjusted price of 2.95 dollars per pound.
 
-### Muenster prices
+### Muenster prices by year
 
 ```{r cheddar}
-muenster <- chs_clean |> 
+chs_clean |> 
   filter(type == "MUENSTER") |> 
   group_by(yr) |> 
   summarize(
@@ -261,87 +230,69 @@ muenster <- chs_clean |>
 ### Which year had the highest cheese storage holdings, on average? Which had the lowest?
 
 ```{r storage}
-storage_yrly <- storage_clean |>
+storage_yrly <- storage_clean |> 
+  filter(data_item == "CHEESE, NATURAL, COLD STORAGE, CHILLED - STOCKS, MEASURED IN LB") |> 
+  group_by(year) |> 
+  summarize(avg_yrly_holding = mean(value)) |> 
+  arrange(avg_yrly_holding |> desc())
+
+storage_yrly
+```
+
+2022 had the highest average cheese stocks, with over 1.48 billion pounds of cheese stored by the U.S. government. 
+
+2001 had the lowest average storage holdings, with over 704 million.
+
+### Which month, on average, sees the highest cheese storage holdings?
+
+```{r storage_monthly}
+storage_monthly <- storage_clean |> 
   filter(
     data_item == "CHEESE, NATURAL, COLD STORAGE, CHILLED - STOCKS, MEASURED IN LB"
 ) |> 
-  group_by(year) |> 
-  summarize(
-    avg_yrly_holding = mean(value)
-) |> 
-  arrange(avg_yrly_holding |> desc())
-
-storage_yrly |> summary()
-```
-
-2022 had the highest average cheese storage holdings, with over 1.48 billion pounds of cheese stored by the U.S. government. 
-
-2001 had the lowest average storage holdings in our data, with just over 700 million pounds stored.
-
-### Plot storage over time
-
-```{r yearly_storage}
-ggplot(storage_yrly, aes(x=year)) + 
-  geom_line(aes(y=avg_yrly_holding)) + 
-  scale_y_continuous(labels = unit_format(unit = "B", scale = 1e-9)) + #changes y-axis units into billions
-  theme(legend.position = "none") +
-  labs(title = "National Cheese Storage Holdings Rise Over Time",
-       subtitle = str_wrap("Government"),
-       caption = "By Athena Hawkins",
-       x = "Year", y = "Pounds of Cheese")
-```
-
-### Plot 2022 Storage
-
-```{r monthly_storage}
-storage_monthly <- storage_clean |> 
-  filter(yr == 2022) |> 
-  mutate(stor_month = month(date, label = TRUE)) |> 
-  group_by(stor_month) |> 
-  summarize(mnthly_lbs = mean(holdings_current_lbs)) |> 
-  arrange()
+  group_by(month_use) |> 
+  summarize(avg_storage = mean(value)) |> 
+  arrange(avg_storage |> desc())
 
 storage_monthly
 ```
 
-### 2022 Storage Plot
+The USDA stored the most cheese in July, storing an average with of 1.01 billion pounds of cheese during the summer month.
 
-```{r storage_recent_plot}
-ggplot(storage_monthly, aes(x=stor_month, y = mnthly_lbs)) + 
-  geom_col() + 
-  coord_flip()
-  labs(title = "National Cheese Storage Holdings in 2022", 
-       x = "Year", y = "Pounds of Cheese")
+## My Visualizations
+
+### 2022 Prices Plot (FOR MY STORY)
+
+```{r thisyear_plot}
+thisyear_plot <- ggplot(thisyear_price, aes(x = date, y = avg_price)) +
+  geom_line() +
+  geom_point() +
+  labs(title = "Weekly U.S. cheese prices fluctuate throughout 2022", subtitle = str_wrap("Average prices per week for all domestic type cheeses peaked in June at over 50 cents higher than February's prices. According to an analysis of USDA market data, the last two weeks have seen falling prices."), caption = "Chart by: Athena Hawkins, Source: USDA Market Data",
+       x = "Month", y = "Price per lb. (in 2022 dollars)")
+
+thisyear_plot
 ```
 
+### Storage over time (FOR MY STORY)
 
-### Swiss cheese plot
+Now I want to plot storage over time by year. I'll use the tibble I made earlier, storage_yrly, for this. I want to use a bar chart so my audience can see that the storage holdings have nearly doubled.
 
-```{r swiss}
-swiss_avg <- chs_clean |> 
-  filter(str_detect(type, "SWISS")) |> 
-  group_by(yr) |> 
-  summarize(average_yearly_low = mean(low_price),
-            average_yearly_high = mean(high_price),
-            adj_yearly_high = mean(adj_high_price),
-            adj_yearly_low = mean(adj_low_price)
-  ) |> 
-  arrange()
+```{r yrly_stor_cols}
+yearly_storage_plot <- ggplot(storage_yrly, aes(x= year, y = avg_yrly_holding)) + 
+  geom_col() +
+  scale_y_continuous(labels = label_number(suffix = "B", scale = 1e-9)) + # billions
+  theme_bw() +
+  labs(title = "National Cheese Storage Holdings Surge Over Time",
+       subtitle = str_wrap("The U.S. government has almost doubled its stockpile of surplus cheese since 2000. According to an analysis of USDA data, cheese storage reached nearly 1.5 billion pounds this year."),
+       caption = "Chart by: Athena Hawkins, Source: USDA",
+       x = "Year", y = "Average Cheese Stored (lbs)")
 
-swiss_avg
+yearly_storage_plot
 ```
 
-Now I'll plot the data.
+### Creating a facet plot
 
-```{r swiss_plot}
-ggplot(swiss_avg, aes(x=yr)) + 
-  geom_line(aes(y=adj_yearly_high, color="High Price")) + 
-  geom_line(aes(y=adj_yearly_low, color="Low Price")) +
-  labs(title = "Swiss Cheese Prices Over Time", 
-       x = "Year", y = "Price per pound (in 2021 dollars)")
-```
-
-### Facet Wrap All Cheeses, Adjusted
+Now I want to create a facet plot for all cheese types over all the years in my data set, to give my readers a comprehensive look at prices.
 
 ```{r adj_facet_wrp}
 facet_adj <- chs_with_avg |> 
@@ -354,26 +305,37 @@ facet_adj <- chs_with_avg |>
 facet_adj
 ```
 
+Now I'll create the separate line plot for my inflation adjusted price data.
 
 ```{r types}
 separate_plot <- ggplot(facet_adj, aes(x = yr, y = adj_yearly_price)) + 
+  theme_bw() +
   geom_point(aes(color = type)) +
   geom_line(aes(color = type)) +
-  labs(title = "U.S. Cheese Prices by Type (in 2021 dollars)", 
-       x = "Year", y = "Price of Domestic Cheese")
+  labs(title = "Domestic type cheese prices over time (adjusted for inflation)",
+       x = "Year", y = "Price per lb. (in 2021 dollars)")
 
 separate_plot
 ```
 
+### Inflation adjusted facet plot (FOR MY STORY)
+
+Now I'll create the facet plot, which will separate the graphs by cheese type to show prices over time for each type of cheese. 
+
 ```{r facet_plot}
 facet_plot <- separate_plot +
   facet_wrap(~ type) +
-  theme(legend.position = "none")
+  theme_bw() +
+  theme(legend.position = "none") +
+  labs(title = "Domestic type cheese prices over time (adjusted for inflation)", subtitle = str_wrap("Cheese prices increased for all types in 2022, but over the last 20 years prices saw several ups and downs, according to an analysis of USDA market data. Prices hit a peak in 2014 due to higher demand for dairy exports from countries like China, according to the US Dairy Export Council."), caption = "Chart by: Athena Hawkins, Source: USDA market data",
+       x = "Year", y = "Price per lb. (in 2021 dollars)")
 
 facet_plot
 ```
 
 ### Facet Wrap All Cheeses, Not Adjusted
+
+Just for fun, I want to see what the data would look like if I used my unadjusted numbers for the graphs.
 
 ```{r facet_unadj}
 unadj <- chs_with_avg |> 
@@ -404,15 +366,24 @@ unadj_facet <- unadj_plot +
 unadj_facet
 ```
 
+## Save plots
 
-```{r plot_save}
-ggsave("plot1.pdf", plot=separate_plot, width=12, height=8)
+This will save the plots to my project folder as pdfs so I can look at the full scale.
+
+```{r priceplot_save}
+ggsave("thisyearprices.pdf", plot=thisyear_plot, width=12, height=8)
 ```
 
 ```{r facet_save}
-ggsave("plot2.pdf", plot=facet_plot, width=12, height=8)
+ggsave("facetprices.pdf", plot=facet_plot, width=12, height=8)
 ```
 
-## Lede draft
+```{r storage_save}
+ggsave("yearlystorage.pdf", plot=yearly_storage_plot, width=12, height=8)
+```
 
-National cheese storage holdings have increased for the fifth year straight, according to U.S.D.A data.
+## Lede and nut graph draft
+
+The U.S. government has nearly doubled it's stockpile of cheese since 2000, according to an analysis of USDA data.
+
+
