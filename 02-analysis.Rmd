@@ -9,8 +9,8 @@ knit: (function(inputFile, encoding) { rmarkdown::render(inputFile, encoding = e
 ## Goals of this Notebook
 
 - Find averages and answer preliminary questions
+- Answer questions that came up in reporting
 - Create visualizations
-- Answer questions that come up through reporting
 
 I want to explore my data by answering the following questions:
 

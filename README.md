@@ -12,7 +12,7 @@ knit: (function(inputFile, encoding) { rmarkdown::render(
 
 ## Final project: USDA cheese data
 
-### This is my final project for a class called Reporting with Data. I'm currently in the process of analyzing cheese data from the USDA, including prices and storage holdings.
+### This is my final project for a class called Reporting with Data. I'm currently in the process of analyzing cheese data from the USDA, including prices, storage holdings, production and consumption.
 
 [Cleaning notebook](https://athenahawkins.github.io/athena-final/01-cleaning.html)
 
@@ -30,6 +30,6 @@ I used Datawrapper to create the final visualizations after I reported my story.
 - Here is my [milk vs. cheese consumption plot](https://www.datawrapper.de/_/V64A1/)
 - Here is my [cheese production plot](https://www.datawrapper.de/_/ysmFF/)
 
-### Final written story
+### Final story
 
-- Here is the link to my final story.
+- You can read my final story [here](https://docs.google.com/document/d/100j1QJS8xSYr6bUNGejKFoskQcE2O4JHSOaNEDMkECc/edit?usp=sharing)
