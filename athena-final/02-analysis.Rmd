@@ -8,9 +8,9 @@ knit: (function(inputFile, encoding) { rmarkdown::render(inputFile, encoding = e
 
 ## Goals of this Notebook
 
-- Find averages and answer preliminary questions
+- Look for trends in data
+- Answer questions and find averages
 - Create visualizations
-- Answer questions that come up through reporting
 
 I want to explore my data by answering the following questions:
 
@@ -19,29 +19,23 @@ I want to explore my data by answering the following questions:
 - Which year had the highest average cheese price? Which had the lowest?
 - Which year had the highest average prices after adjusting for inflation (in 2021 dollars)? Which had the lowest?
 - In which month was the price of cheese the highest, on average (inflation adjusted)?
-- What were the average 2021 prices for each type of cheese?
+- What were the 2021 prices for each type of cheese?
 - What were the average 2021 cheese prices for each month?
-- What were the average 2022 cheese prices for each month?
+- What were the average 2021 cheese prices for each month?
 
 ### Storage Questions:
 
 - Which year had the highest cheese storage holdings, on average? Which had the lowest?
-- Which month sees the highest storage holdings?
-- What is the percent change in storage holdings from 2001 to 2021?
+- 
 
-### Production Questions:
+### Visualizations:
 
-- Which year in the data had the highest production?
-- Which month sees the highest production, on average?
-- What does production in Texas look like over time?
 
 ## About the data
 
 This is [USDA](http://rmarkdown.rstudio.com) price data on domestic cheeses that I've collected, cleaned and adjusted for inflation.
 
 Storage holdings data is in units of pounds. The storage holding data comes from the USDA National Agricultural Statistics Service [Cold Storage Report](https://quickstats.nass.usda.gov/results/172E17CF-AD11-37D8-949A-0624FA6A9CD0).
-
-Cheese production data also comes in units of pounds. It dates back to 1970.
 
 ## Setup
 
@@ -51,18 +45,15 @@ library(lubridate)
 library(dplyr)
 library(scales)
 library(ggthemes)
-library(clipr)
 ```
 
 ## Import data
 
-I'm importing all my cleaned data here.
+I'm importing my cleaned data here.
 
 ```{r import}
 chs_clean <- readRDS("data-processed/01-cleaning.rds")
 storage_clean <- readRDS("data-processed/01-storage.rds")
-production_clean <- readRDS("data-processed/01-production.rds")
-consumption_clean <- readRDS("data-processed/01-consumption.rds")
 ```
 
 ### Create average price column
@@ -261,137 +252,31 @@ storage_monthly
 
 The USDA stored the most cheese in July, storing an average with of 1.01 billion pounds of cheese during the summer month.
 
-### Percent change in storage holdings from 2000 to 2022
+### Percent change in recent storage years
 
-I'll use the percent change formula to find the percent change from 2000 to 2022 for pounds of cheese stored.
+```{r percent_change}
+storage_change <- storage_yrly |> 
+  filter(year > 2013) |> 
+  mutate(pct_change = (avg_yrly_holding/lead(avg_yrly_holding) - 1) * 100)
 
-```{r}
-since_00 <- storage_yrly |> 
-  filter(year == 2001 | year == 2022)
-
-since_00 #print result to get my numbers for each year
-
-since_00_math <- 
-  ((1483438000-704543000	)/704543000) * 100 #calculate percent change
-
-since_00_math #print out result
+storage_change
 ```
 
-Storage holdings more than doubled from 2001 to 2022.
+Plotting percent change in recent years.
 
-## Production data
-
-Which year saw the highest cheese production in the data? I want to group by year to find this. I'll exclude 2022 since we haven't finished the year out yet.
-
-```{r production_high}
-prod_by_year <- production_clean |>
-  filter(year <= 2021) |> 
-  group_by(year) |> 
-  summarize(total_production = sum(value)) |> 
-  arrange(total_production |> desc())
-
-prod_by_year
-```
-
-2021, which was last year, had the highest production since 1970. 
-
-### Production by state in 2021
-
-```{r}
-production_clean |>
-  filter(year == 2021) |> 
-  arrange(value |> desc())
-```
-
-Wisconsin had the highest production in 2021, followed by a combination of Other States, of which Texas is part, then California, Idaho and New Mexico.
-
-### Graphing production data
-
-```{r prod_plot}
-prod_plot <- ggplot(prod_by_year, aes(x= year, y = total_production)) + 
+```{r plotchange}
+percent_change_plot <- ggplot(storage_change, aes(x = year, y = pct_change)) +
   geom_col() +
-  scale_y_continuous(labels = label_number(suffix = "B", scale = 1e-9)) + # billions
-  theme_bw() +
-  labs(title = "U.S. Cheese Production Grows Over Time",
-       subtitle = str_wrap("Cheese production has increased almost every year since 1970, according to an analysis of data from the National Agriculture Statistics Service within the USDA."),
-       caption = "Chart by: Athena Hawkins, Source: USDA",
-       x = "Year", y = "Total cheese production (lbs)")
+  labs(title = "Percent change in U.S. Cheese Storage Holdings", subtitle = str_wrap("Cheese storage holdings have increased each year since 2014."), caption = "Chart by: Athena Hawkins, Source: USDA holdings data",
+       x = "Year", y = "Percent change")
 
-prod_plot
+percent_change_plot
 ```
 
-It's interesting that this seems to trend alongside storage data. I want to put them in a chart together, but I'll need to see how that works.
-
-### Percent change in production
-
-I want to calculate percent change from 1970 to 2021.
-
-```{r pctchange_prod}
-(13706566000-2201428000)/2201428000
-```
-
-Cheese production has increased by 523%, or by over six times, since 1970.
-
-### Production in Datawrapper
-
-I want to put this in datawrapper so I can create a column chart from it.
-
-```{r prod_datawrp}
-prod_by_year |> write_clip(allow_non_interactive = TRUE)
-```
-
-## Consumption Data
-
-I want to create tibbles for yearly milk consumption and yearly cheese consumption, so I can put them together to get a chart with both trends.
-
-```{r consum_yearly}
-milk_yrly <- consumption_clean |> 
-  select(year, fluid_beverage_milk)
-
-milk_yrly
-```
-
-Now I'll make a tibble for cheese consumption.
-
-```{r chs_consum}
-cheesecnsm_yrly <- consumption_clean |> 
-  select(year, american_type)
-
-cheesecnsm_yrly
-```
-
-Now I'll join the rows together to get one tibble. I'll use join to keep all rows and columns for both data, joining where they match. 
-
-```{r bind_cheeses}
-combined_consumption <- cheesecnsm_yrly |> 
-  full_join(milk_yrly) #this joins where the tables match, on year
-
-combined_consumption #check to see if it worked
-```
-
-The trend is shows an increase in per capita consumption of cheese and a decrease in fluid milk consumption. I want to graph this later in Datawrapper.
-
-### Percent changes
-
-I want to calculate the percent change in milk consumption from 1975 to 2021
-
-```{r pctchange_milk}
-(134-247)/247
-```
-
-Fluid milk consumption decreased by 46 percent from 1975 to 2021. 
-
-Now I want to calculate how cheese consumption increased.
-
-```{r pctchange_cheese}
-(16.1-8.15)/8.15
-```
-
-Cheese consumption increased by 98 percent from 1975 to 2021.
 
 ## My Visualizations
 
-### 2022 Prices Plot
+### 2022 Prices Plot (FOR MY STORY)
 
 ```{r thisyear_plot}
 thisyear_plot <- ggplot(thisyear_price, aes(x = date, y = avg_price)) +
@@ -403,11 +288,9 @@ thisyear_plot <- ggplot(thisyear_price, aes(x = date, y = avg_price)) +
 thisyear_plot
 ```
 
-### Storage over time (EDIT IN DATAWRAPPER)
+### Storage over time (FOR MY STORY)
 
 Now I want to plot storage over time by year. I'll use the tibble I made earlier, storage_yrly, for this. I want to use a bar chart so my audience can see that the storage holdings have nearly doubled.
-
-I want to see how it looks in ggplot so I can model that later in Datawrapper.
 
 ```{r yrly_stor_cols}
 yearly_storage_plot <- ggplot(storage_yrly, aes(x= year, y = avg_yrly_holding)) + 
@@ -420,18 +303,6 @@ yearly_storage_plot <- ggplot(storage_yrly, aes(x= year, y = avg_yrly_holding)) 
        x = "Year", y = "Average Cheese Stored (lbs)")
 
 yearly_storage_plot
-```
-
-### Storage over time in Datawrapper
-
-```{r datawrp-storage}
-storage_yrly |> write_clip(allow_non_interactive = TRUE)
-```
-
-### Milk vs. Cheese Consumption in Datawrapper
-
-```{r datawrp-consum}
-combined_consumption |> write_clip(allow_non_interactive = TRUE)
 ```
 
 ### Creating a facet plot
@@ -479,7 +350,7 @@ facet_plot
 
 ### Facet Wrap All Cheeses, Not Adjusted
 
-Just for fun, I want to see what the data would look like if I used my non-adjusted numbers for the graphs.
+Just for fun, I want to see what the data would look like if I used my unadjusted numbers for the graphs.
 
 ```{r facet_unadj}
 unadj <- chs_with_avg |> 
@@ -514,14 +385,24 @@ unadj_facet <- unadj_plot +
 unadj_facet
 ```
 
-## Links to Datawrapper charts (FOR MY STORY)
+## Save plots
 
-- Here is my [storage holdings over time](https://www.datawrapper.de/_/ffQXL/) column chart.
-- Here is my [milk vs. cheese consumption plot](https://www.datawrapper.de/_/V64A1/)
-- Here is my [cheese production plot](https://www.datawrapper.de/_/ysmFF/).
+This will save the plots to my project folder as pdfs so I can look at the full scale.
 
-## Conclusions
+```{r priceplot_save}
+ggsave("thisyearprices.pdf", plot=thisyear_plot, width=12, height=8)
+```
 
-I didn't end up using much of the price data in my story, which is a little bit tragic, since it took so much time to adjust for inflation. But looking at prices did help me ask my sources the right questions, and that's what data reporting is all about! They led me towards production and consumption data, which ended up making more sense.
+```{r facet_save}
+ggsave("facetprices.pdf", plot=facet_plot, width=12, height=8)
+```
 
-Basically, not everything in this analysis ended up in my story. But everything here was a piece of the final puzzle!
+```{r storage_save}
+ggsave("yearlystorage.pdf", plot=yearly_storage_plot, width=12, height=8)
+```
+
+## Lede and nut graph draft
+
+The U.S. government's stockpile of cheese reached nearly 1.5 billion pounds this year. The amount of cheese in cold storage across the country has more than doubled since 2001, according to an analysis USDA holdings data.
+
+Government cheese holdings increased by over 2.8 percent this year, marking the eighth consecutive year in which the stockpile grew. This year's hike came amid rising prices for all types of domestic cheese, even after accounting for steep levels of inflation. But the federal government is no stranger to propping up dairy farmers amid economic uncertainty — their ever-growing cheese storage originated from another inflationary period in the 1970s.

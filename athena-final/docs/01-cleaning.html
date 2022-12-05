@@ -11,7 +11,7 @@
 
 
 
-<title>README</title>
+<title>Cleaning Data</title>
 
 <script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
 // be compatible with the behavior of Pandoc < 2.8).
@@ -1632,51 +1632,1022 @@ pre code {
 
 
 
+<h1 class="title toc-ignore">Cleaning Data</h1>
 
 </div>
 
 
-<div id="final-project-usda-cheese-data" class="section level2">
-<h2>Final project: USDA cheese data</h2>
-<div id="this-is-my-final-project-for-a-class-called-reporting-with-data.-im-currently-in-the-process-of-analyzing-cheese-data-from-the-usda-including-prices-and-storage-holdings." class="section level3">
-<h3>This is my final project for a class called Reporting with Data. I’m
-currently in the process of analyzing cheese data from the USDA,
-including prices and storage holdings.</h3>
-<p><a href="https://athenahawkins.github.io/athena-final/01-cleaning.html">Cleaning
-notebook</a></p>
+<div id="goals-of-this-notebook" class="section level2">
+<h2>Goals of this Notebook</h2>
 <ul>
-<li>In this notebook, I imported a folder filled with yearly cheese
-storage and price data dating from 2000 to the present. I clean the
-data, and use the yearly average CPI to adjust the price data for
-inflation (into 2015 dollars).</li>
-</ul>
-<p><a href="https://athenahawkins.github.io/athena-final/02-analysis.html">Analysis/Visuals
-notebook</a></p>
-<ul>
-<li>I created <a href="https://github.com/athenahawkins/athena-final/blob/main/plot2.pdf">this
-visualization</a> for each types of cheese and their prices over time,
-adjusted for inflation.</li>
+<li>Import all my cheese data</li>
+<li>Clean names and dates</li>
+<li>Write the cleaned data</li>
 </ul>
 </div>
-<div id="final-visualizations" class="section level3">
-<h3>Final visualizations</h3>
-<p>I used Datawrapper to create the final visualizations after I
-reported my story.</p>
-<ul>
-<li>Here is my <a href="https://www.datawrapper.de/_/ffQXL/">storage
-holdings over time</a> column chart</li>
-<li>Here is my <a href="https://www.datawrapper.de/_/V64A1/">milk
-vs. cheese consumption plot</a></li>
-<li>Here is my <a href="https://www.datawrapper.de/_/ysmFF/">cheese
-production plot</a></li>
-</ul>
+<div id="about-the-data" class="section level2">
+<h2>About the data</h2>
+<p>I collected cheese price data from the <a href="https://mymarketnews.ams.usda.gov/public_data">United States
+Department of Agriculture (USDA)</a>. It ranges from 2000 to 2022, and
+covers the region categories of Wisconsin, Western U.S., Midwestern U.S.
+and the Northeastern U.S. region. The prices are in units of dollars per
+pound.</p>
+<p>In addition to price data, I want to look at USDA data on the
+government’s cheese storage holdings. I’ll import that here and use it
+to compare in my analysis. Storage holdings data is in units of pounds,
+and comes from the USDA National Agricultural Statistics Service <a href="https://quickstats.nass.usda.gov/results/172E17CF-AD11-37D8-949A-0624FA6A9CD0">Cold
+Storage Report</a>.</p>
+<p>You check out these <a href="https://mymarketnews.ams.usda.gov/faqs">FAQs</a> about USDA market
+data.</p>
 </div>
-<div id="final-written-story" class="section level3">
-<h3>Final written story</h3>
-<ul>
-<li>Here is the link to my final story.</li>
-</ul>
+<div id="setup" class="section level2">
+<h2>Setup</h2>
+<p>I’m loading the tidyverse library and lubridate package so I can
+clean up my data.</p>
+<pre class="r"><code>library(tidyverse)</code></pre>
+<pre><code>## ── Attaching packages ─────────────────────────────────────── tidyverse 1.3.2 ──
+## ✔ ggplot2 3.3.6      ✔ purrr   0.3.4 
+## ✔ tibble  3.1.8      ✔ dplyr   1.0.10
+## ✔ tidyr   1.2.0      ✔ stringr 1.4.1 
+## ✔ readr   2.1.2      ✔ forcats 0.5.2 
+## ── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
+## ✖ dplyr::filter() masks stats::filter()
+## ✖ dplyr::lag()    masks stats::lag()</code></pre>
+<pre class="r"><code>library(lubridate)</code></pre>
+<pre><code>## 
+## Attaching package: &#39;lubridate&#39;
+## 
+## The following objects are masked from &#39;package:base&#39;:
+## 
+##     date, intersect, setdiff, union</code></pre>
+<pre class="r"><code>library(dplyr)
+library(janitor)</code></pre>
+<pre><code>## 
+## Attaching package: &#39;janitor&#39;
+## 
+## The following objects are masked from &#39;package:stats&#39;:
+## 
+##     chisq.test, fisher.test</code></pre>
+<pre class="r"><code>library(tidyr)</code></pre>
 </div>
+<div id="import-price-data" class="section level2">
+<h2>Import price data</h2>
+<p>I’ll import all my files here, which range from January 2000 to
+November 2022. These reports fall under three regional categories,
+including Western U.S. cheese, Northeastern U.S. cheese and Midwestern
+U.S. cheese.</p>
+<p>I downloaded each files from an API and put them in a folder called
+file list. I’ll import and bind all the files into one tibble using the
+list.files function.</p>
+<pre class="r"><code>list_of_files &lt;- list.files(path = &quot;file-list&quot;, recursive = TRUE,
+                            pattern = &quot;\\.csv$&quot;, 
+                            full.names = TRUE) #imports the file list
+
+cheese_dirty &lt;- list_of_files |&gt; 
+  purrr::set_names(nm = (basename(&quot;file-list&quot;) |&gt;  tools::file_path_sans_ext())
+) |&gt; 
+  purrr::map_df(read_csv, 
+                col_names = TRUE) #sets names</code></pre>
+<pre><code>## Rows: 936 Columns: 37
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr (30): group, category, report begin date, report end date, published dat...
+## dbl  (3): slug id, price min, price max
+## lgl  (4): freight, lot Desc, mostly low price, mostly high price
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## Rows: 936 Columns: 37
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr (30): group, category, report begin date, report end date, published dat...
+## dbl  (3): slug id, price min, price max
+## lgl  (4): freight, lot Desc, mostly low price, mostly high price
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## Rows: 918 Columns: 37
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr (30): group, category, report begin date, report end date, published dat...
+## dbl  (3): slug id, price min, price max
+## lgl  (4): freight, lot Desc, mostly low price, mostly high price
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## Rows: 357 Columns: 37
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr (30): group, category, report begin date, report end date, published dat...
+## dbl  (3): slug id, price min, price max
+## lgl  (4): freight, lot Desc, mostly low price, mostly high price
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## Rows: 364 Columns: 37
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr (30): group, category, report begin date, report end date, published dat...
+## dbl  (3): slug id, price min, price max
+## lgl  (4): freight, lot Desc, mostly low price, mostly high price
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## Rows: 364 Columns: 37
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr (30): group, category, report begin date, report end date, published dat...
+## dbl  (3): slug id, price min, price max
+## lgl  (4): freight, lot Desc, mostly low price, mostly high price
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## Rows: 364 Columns: 37
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr (30): group, category, report begin date, report end date, published dat...
+## dbl  (3): slug id, price min, price max
+## lgl  (4): freight, lot Desc, mostly low price, mostly high price
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## Rows: 364 Columns: 37
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr (30): group, category, report begin date, report end date, published dat...
+## dbl  (3): slug id, price min, price max
+## lgl  (4): freight, lot Desc, mostly low price, mostly high price
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## Rows: 357 Columns: 37
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr (30): group, category, report begin date, report end date, published dat...
+## dbl  (3): slug id, price min, price max
+## lgl  (4): freight, lot Desc, mostly low price, mostly high price
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## Rows: 357 Columns: 37
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr (30): group, category, report begin date, report end date, published dat...
+## dbl  (3): slug id, price min, price max
+## lgl  (4): freight, lot Desc, mostly low price, mostly high price
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## Rows: 364 Columns: 37
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr (30): group, category, report begin date, report end date, published dat...
+## dbl  (3): slug id, price min, price max
+## lgl  (4): freight, lot Desc, mostly low price, mostly high price
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## Rows: 364 Columns: 37
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr (30): group, category, report begin date, report end date, published dat...
+## dbl  (3): slug id, price min, price max
+## lgl  (4): freight, lot Desc, mostly low price, mostly high price
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## Rows: 364 Columns: 37
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr (30): group, category, report begin date, report end date, published dat...
+## dbl  (3): slug id, price min, price max
+## lgl  (4): freight, lot Desc, mostly low price, mostly high price
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## Rows: 336 Columns: 37
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr (30): group, category, report begin date, report end date, published dat...
+## dbl  (3): slug id, price min, price max
+## lgl  (4): freight, lot Desc, mostly low price, mostly high price
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## Rows: 357 Columns: 37
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr (30): group, category, report begin date, report end date, published dat...
+## dbl  (3): slug id, price min, price max
+## lgl  (4): freight, lot Desc, mostly low price, mostly high price
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## Rows: 357 Columns: 37
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr (30): group, category, report begin date, report end date, published dat...
+## dbl  (3): slug id, price min, price max
+## lgl  (4): freight, lot Desc, mostly low price, mostly high price
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## Rows: 364 Columns: 37
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr (30): group, category, report begin date, report end date, published dat...
+## dbl  (3): slug id, price min, price max
+## lgl  (4): freight, lot Desc, mostly low price, mostly high price
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## Rows: 364 Columns: 37
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr (30): group, category, report begin date, report end date, published dat...
+## dbl  (3): slug id, price min, price max
+## lgl  (4): freight, lot Desc, mostly low price, mostly high price
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## Rows: 397 Columns: 37
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr (31): group, category, report begin date, report end date, published dat...
+## dbl  (3): slug id, price min, price max
+## lgl  (3): lot Desc, mostly low price, mostly high price
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## Rows: 408 Columns: 37
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr (31): group, category, report begin date, report end date, published dat...
+## dbl  (3): slug id, price min, price max
+## lgl  (3): lot Desc, mostly low price, mostly high price
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## Rows: 416 Columns: 37
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr (31): group, category, report begin date, report end date, published dat...
+## dbl  (3): slug id, price min, price max
+## lgl  (3): lot Desc, mostly low price, mostly high price
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## Rows: 416 Columns: 37
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr (31): group, category, report begin date, report end date, published dat...
+## dbl  (3): slug id, price min, price max
+## lgl  (3): lot Desc, mostly low price, mostly high price
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## Rows: 360 Columns: 37
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr (31): group, category, report begin date, report end date, published dat...
+## dbl  (3): slug id, price min, price max
+## lgl  (3): lot Desc, mostly low price, mostly high price
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## Rows: 364 Columns: 37
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr (30): group, category, report begin date, report end date, published dat...
+## dbl  (3): slug id, price min, price max
+## lgl  (4): freight, lot Desc, mostly low price, mostly high price
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## Rows: 364 Columns: 37
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr (30): group, category, report begin date, report end date, published dat...
+## dbl  (3): slug id, price min, price max
+## lgl  (4): freight, lot Desc, mostly low price, mostly high price
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## Rows: 357 Columns: 37
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr (30): group, category, report begin date, report end date, published dat...
+## dbl  (3): slug id, price min, price max
+## lgl  (4): freight, lot Desc, mostly low price, mostly high price
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## Rows: 357 Columns: 37
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr (30): group, category, report begin date, report end date, published dat...
+## dbl  (3): slug id, price min, price max
+## lgl  (4): freight, lot Desc, mostly low price, mostly high price
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## Rows: 364 Columns: 37
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr (30): group, category, report begin date, report end date, published dat...
+## dbl  (3): slug id, price min, price max
+## lgl  (4): freight, lot Desc, mostly low price, mostly high price
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## Rows: 364 Columns: 37
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr (30): group, category, report begin date, report end date, published dat...
+## dbl  (3): slug id, price min, price max
+## lgl  (4): freight, lot Desc, mostly low price, mostly high price
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## Rows: 364 Columns: 37
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr (30): group, category, report begin date, report end date, published dat...
+## dbl  (3): slug id, price min, price max
+## lgl  (4): freight, lot Desc, mostly low price, mostly high price
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## Rows: 364 Columns: 37
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr (30): group, category, report begin date, report end date, published dat...
+## dbl  (3): slug id, price min, price max
+## lgl  (4): freight, lot Desc, mostly low price, mostly high price
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## Rows: 357 Columns: 37
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr (30): group, category, report begin date, report end date, published dat...
+## dbl  (3): slug id, price min, price max
+## lgl  (4): freight, lot Desc, mostly low price, mostly high price
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## Rows: 357 Columns: 37
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr (30): group, category, report begin date, report end date, published dat...
+## dbl  (3): slug id, price min, price max
+## lgl  (4): freight, lot Desc, mostly low price, mostly high price
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## Rows: 208 Columns: 37
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr (30): group, category, report begin date, report end date, published dat...
+## dbl  (3): slug id, price min, price max
+## lgl  (4): freight, lot Desc, mostly low price, mostly high price
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## Rows: 208 Columns: 37
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr (30): group, category, report begin date, report end date, published dat...
+## dbl  (3): slug id, price min, price max
+## lgl  (4): freight, lot Desc, mostly low price, mostly high price
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## Rows: 208 Columns: 37
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr (30): group, category, report begin date, report end date, published dat...
+## dbl  (3): slug id, price min, price max
+## lgl  (4): freight, lot Desc, mostly low price, mostly high price
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## Rows: 192 Columns: 37
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr (30): group, category, report begin date, report end date, published dat...
+## dbl  (3): slug id, price min, price max
+## lgl  (4): freight, lot Desc, mostly low price, mostly high price
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## Rows: 204 Columns: 37
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr (30): group, category, report begin date, report end date, published dat...
+## dbl  (3): slug id, price min, price max
+## lgl  (4): freight, lot Desc, mostly low price, mostly high price
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## Rows: 204 Columns: 37
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr (30): group, category, report begin date, report end date, published dat...
+## dbl  (3): slug id, price min, price max
+## lgl  (4): freight, lot Desc, mostly low price, mostly high price
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## Rows: 208 Columns: 37
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr (30): group, category, report begin date, report end date, published dat...
+## dbl  (3): slug id, price min, price max
+## lgl  (4): freight, lot Desc, mostly low price, mostly high price
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## Rows: 208 Columns: 37
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr (30): group, category, report begin date, report end date, published dat...
+## dbl  (3): slug id, price min, price max
+## lgl  (4): freight, lot Desc, mostly low price, mostly high price
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## Rows: 217 Columns: 37
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr (31): group, category, report begin date, report end date, published dat...
+## dbl  (3): slug id, price min, price max
+## lgl  (3): lot Desc, mostly low price, mostly high price
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## Rows: 208 Columns: 37
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr (30): group, category, report begin date, report end date, published dat...
+## dbl  (3): slug id, price min, price max
+## lgl  (4): lot Desc, origin, mostly low price, mostly high price
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## Rows: 208 Columns: 37
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr (30): group, category, report begin date, report end date, published dat...
+## dbl  (3): slug id, price min, price max
+## lgl  (4): lot Desc, origin, mostly low price, mostly high price
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## Rows: 208 Columns: 37
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr (30): group, category, report begin date, report end date, published dat...
+## dbl  (3): slug id, price min, price max
+## lgl  (4): lot Desc, origin, mostly low price, mostly high price
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## Rows: 180 Columns: 37
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr (30): group, category, report begin date, report end date, published dat...
+## dbl  (3): slug id, price min, price max
+## lgl  (4): lot Desc, origin, mostly low price, mostly high price
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## Rows: 260 Columns: 37
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr (30): group, category, report begin date, report end date, published dat...
+## dbl  (3): slug id, price min, price max
+## lgl  (4): freight, lot Desc, mostly low price, mostly high price
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## Rows: 260 Columns: 37
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr (30): group, category, report begin date, report end date, published dat...
+## dbl  (3): slug id, price min, price max
+## lgl  (4): freight, lot Desc, mostly low price, mostly high price
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## Rows: 255 Columns: 37
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr (30): group, category, report begin date, report end date, published dat...
+## dbl  (3): slug id, price min, price max
+## lgl  (4): freight, lot Desc, mostly low price, mostly high price
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## Rows: 255 Columns: 37
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr (30): group, category, report begin date, report end date, published dat...
+## dbl  (3): slug id, price min, price max
+## lgl  (4): freight, lot Desc, mostly low price, mostly high price
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## Rows: 260 Columns: 37
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr (30): group, category, report begin date, report end date, published dat...
+## dbl  (3): slug id, price min, price max
+## lgl  (4): freight, lot Desc, mostly low price, mostly high price
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## Rows: 260 Columns: 37
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr (30): group, category, report begin date, report end date, published dat...
+## dbl  (3): slug id, price min, price max
+## lgl  (4): freight, lot Desc, mostly low price, mostly high price
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## Rows: 260 Columns: 37
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr (30): group, category, report begin date, report end date, published dat...
+## dbl  (3): slug id, price min, price max
+## lgl  (4): freight, lot Desc, mostly low price, mostly high price
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## Rows: 260 Columns: 37
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr (30): group, category, report begin date, report end date, published dat...
+## dbl  (3): slug id, price min, price max
+## lgl  (4): freight, lot Desc, mostly low price, mostly high price
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## Rows: 255 Columns: 37
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr (30): group, category, report begin date, report end date, published dat...
+## dbl  (3): slug id, price min, price max
+## lgl  (4): freight, lot Desc, mostly low price, mostly high price
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## Rows: 255 Columns: 37
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr (30): group, category, report begin date, report end date, published dat...
+## dbl  (3): slug id, price min, price max
+## lgl  (4): freight, lot Desc, mostly low price, mostly high price
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## Rows: 260 Columns: 37
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr (30): group, category, report begin date, report end date, published dat...
+## dbl  (3): slug id, price min, price max
+## lgl  (4): freight, lot Desc, mostly low price, mostly high price
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## Rows: 260 Columns: 37
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr (30): group, category, report begin date, report end date, published dat...
+## dbl  (3): slug id, price min, price max
+## lgl  (4): freight, lot Desc, mostly low price, mostly high price
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## Rows: 260 Columns: 37
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr (30): group, category, report begin date, report end date, published dat...
+## dbl  (3): slug id, price min, price max
+## lgl  (4): freight, lot Desc, mostly low price, mostly high price
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## Rows: 240 Columns: 37
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr (30): group, category, report begin date, report end date, published dat...
+## dbl  (3): slug id, price min, price max
+## lgl  (4): freight, lot Desc, mostly low price, mostly high price
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## Rows: 255 Columns: 37
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr (30): group, category, report begin date, report end date, published dat...
+## dbl  (3): slug id, price min, price max
+## lgl  (4): freight, lot Desc, mostly low price, mostly high price
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## Rows: 255 Columns: 37
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr (30): group, category, report begin date, report end date, published dat...
+## dbl  (3): slug id, price min, price max
+## lgl  (4): freight, lot Desc, mostly low price, mostly high price
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## Rows: 260 Columns: 37
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr (30): group, category, report begin date, report end date, published dat...
+## dbl  (3): slug id, price min, price max
+## lgl  (4): freight, lot Desc, mostly low price, mostly high price
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## Rows: 260 Columns: 37
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr (30): group, category, report begin date, report end date, published dat...
+## dbl  (3): slug id, price min, price max
+## lgl  (4): freight, lot Desc, mostly low price, mostly high price
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## Rows: 275 Columns: 37
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr (31): group, category, report begin date, report end date, published dat...
+## dbl  (3): slug id, price min, price max
+## lgl  (3): lot Desc, mostly low price, mostly high price
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## Rows: 260 Columns: 37
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr (30): group, category, report begin date, report end date, published dat...
+## dbl  (3): slug id, price min, price max
+## lgl  (4): lot Desc, origin, mostly low price, mostly high price
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## Rows: 260 Columns: 37
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr (30): group, category, report begin date, report end date, published dat...
+## dbl  (3): slug id, price min, price max
+## lgl  (4): lot Desc, origin, mostly low price, mostly high price
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## Rows: 260 Columns: 37
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr (30): group, category, report begin date, report end date, published dat...
+## dbl  (3): slug id, price min, price max
+## lgl  (4): lot Desc, origin, mostly low price, mostly high price
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## Rows: 225 Columns: 37
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr (30): group, category, report begin date, report end date, published dat...
+## dbl  (3): slug id, price min, price max
+## lgl  (4): lot Desc, origin, mostly low price, mostly high price
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+<pre class="r"><code>cheese_dirty |&gt; summary()</code></pre>
+<pre><code>##     group             category         report begin date  report end date   
+##  Length:22367       Length:22367       Length:22367       Length:22367      
+##  Class :character   Class :character   Class :character   Class :character  
+##  Mode  :character   Mode  :character   Mode  :character   Mode  :character  
+##                                                                             
+##                                                                             
+##                                                                             
+##                                                                             
+##  published date     market location name market location city
+##  Length:22367       Length:22367         Length:22367        
+##  Class :character   Class :character     Class :character    
+##  Mode  :character   Mode  :character     Mode  :character    
+##                                                              
+##                                                              
+##                                                              
+##                                                              
+##  market location state  commodity         market type       
+##  Length:22367          Length:22367       Length:22367      
+##  Class :character      Class :character   Class :character  
+##  Mode  :character      Mode  :character   Mode  :character  
+##                                                             
+##                                                             
+##                                                             
+##                                                             
+##  market type category    slug id      slug name         report title      
+##  Length:22367         Min.   :1083   Length:22367       Length:22367      
+##  Class :character     1st Qu.:1083   Class :character   Class :character  
+##  Mode  :character     Median :1084   Mode  :character   Mode  :character  
+##                       Mean   :1084                                        
+##                       3rd Qu.:1085                                        
+##                       Max.   :1085                                        
+##                                                                           
+##   final ind          community            region           sale Type        
+##  Length:22367       Length:22367       Length:22367       Length:22367      
+##  Class :character   Class :character   Class :character   Class :character  
+##  Mode  :character   Mode  :character   Mode  :character   Mode  :character  
+##                                                                             
+##                                                                             
+##                                                                             
+##                                                                             
+##  application          freight            quality             grade          
+##  Length:22367       Length:22367       Length:22367       Length:22367      
+##  Class :character   Class :character   Class :character   Class :character  
+##  Mode  :character   Mode  :character   Mode  :character   Mode  :character  
+##                                                                             
+##                                                                             
+##                                                                             
+##                                                                             
+##  other Grades        price Unit        lot Desc         organic         
+##  Length:22367       Length:22367       Mode:logical   Length:22367      
+##  Class :character   Class :character   NA&#39;s:22367     Class :character  
+##  Mode  :character   Mode  :character                  Mode  :character  
+##                                                                         
+##                                                                         
+##                                                                         
+##                                                                         
+##     origin            package          volume Unit          price min    
+##  Length:22367       Length:22367       Length:22367       Min.   :0.980  
+##  Class :character   Class :character   Class :character   1st Qu.:1.610  
+##  Mode  :character   Mode  :character   Mode  :character   Median :1.920  
+##                                                           Mean   :1.989  
+##                                                           3rd Qu.:2.268  
+##                                                           Max.   :4.290  
+##                                                           NA&#39;s   :1      
+##    price max     mostly low price mostly high price report narrative  
+##  Min.   :1.012   Mode:logical     Mode:logical      Length:22367      
+##  1st Qu.:1.958   NA&#39;s:22367       NA&#39;s:22367        Class :character  
+##  Median :2.270                                      Mode  :character  
+##  Mean   :2.366                                                        
+##  3rd Qu.:2.685                                                        
+##  Max.   :6.612                                                        
+##  NA&#39;s   :1                                                            
+##  commodity narrative secondary source info methodology       
+##  Length:22367        Length:22367          Length:22367      
+##  Class :character    Class :character      Class :character  
+##  Mode  :character    Mode  :character      Mode  :character  
+##                                                              
+##                                                              
+##                                                              
+## </code></pre>
+<div id="clean-price-data" class="section level3">
+<h3>Clean price data</h3>
+<p>Now it’s time to clean my data. I’ll use mutate.if to change all the
+character values to upper case letters so I can search easily later on.
+I’ll also clean up my column names. Then, I’ll change the names of some
+of my columns to make it easier for me to analyze.</p>
+<p>Finally, I’ll select the columns I need for my analysis so I don’t
+have to worry about the other ones.</p>
+<pre class="r"><code>cheese_clean &lt;- cheese_dirty |&gt; 
+  mutate_if(
+    is.character, str_to_upper
+) |&gt; 
+  clean_names(
+) |&gt;
+  mutate(
+    date = mdy(report_begin_date),
+    high_price = price_max,
+    low_price = price_min,
+    type = group
+) |&gt; 
+  select(
+    date, region, high_price, low_price, type
+  )
+
+cheese_clean |&gt; summary() #checking column names</code></pre>
+<pre><code>##       date               region            high_price      low_price    
+##  Min.   :2000-01-03   Length:22367       Min.   :1.012   Min.   :0.980  
+##  1st Qu.:2003-12-15   Class :character   1st Qu.:1.958   1st Qu.:1.610  
+##  Median :2009-08-24   Mode  :character   Median :2.270   Median :1.920  
+##  Mean   :2010-04-30                      Mean   :2.366   Mean   :1.989  
+##  3rd Qu.:2016-06-13                      3rd Qu.:2.685   3rd Qu.:2.268  
+##  Max.   :2022-11-07                      Max.   :6.612   Max.   :4.290  
+##                                          NA&#39;s   :1       NA&#39;s   :1      
+##      type          
+##  Length:22367      
+##  Class :character  
+##  Mode  :character  
+##                    
+##                    
+##                    
+## </code></pre>
+</div>
+<div id="adjust-prices-for-inflation" class="section level3">
+<h3>Adjust prices for inflation</h3>
+<p>Now I want to adjust my prices for inflation. I’ll be using the <a href="https://www.bls.gov/bls/archived_sched.htm">average yearly
+Consumer Price Index for Urban Consumers, or CPI-U</a> from the Bureau
+of Labor Statistics to calculate each year’s cheese prices adjusted to
+2015 dollars. First, I need to make a year column.</p>
+<pre class="r"><code>cheese_yrs &lt;- cheese_clean |&gt;
+  mutate(
+    yr = year(date))
+
+cheese_yrs |&gt; summary()</code></pre>
+<pre><code>##       date               region            high_price      low_price    
+##  Min.   :2000-01-03   Length:22367       Min.   :1.012   Min.   :0.980  
+##  1st Qu.:2003-12-15   Class :character   1st Qu.:1.958   1st Qu.:1.610  
+##  Median :2009-08-24   Mode  :character   Median :2.270   Median :1.920  
+##  Mean   :2010-04-30                      Mean   :2.366   Mean   :1.989  
+##  3rd Qu.:2016-06-13                      3rd Qu.:2.685   3rd Qu.:2.268  
+##  Max.   :2022-11-07                      Max.   :6.612   Max.   :4.290  
+##                                          NA&#39;s   :1       NA&#39;s   :1      
+##      type                 yr      
+##  Length:22367       Min.   :2000  
+##  Class :character   1st Qu.:2003  
+##  Mode  :character   Median :2009  
+##                     Mean   :2010  
+##                     3rd Qu.:2016  
+##                     Max.   :2022  
+## </code></pre>
+<p>Now I’ll divide the average CPI for each year by the 2021 CPI. Then,
+I’ll multiply it by each price in order to get a column where every
+price in my data set is adjusted to 2021 dollars.</p>
+<p>A CPI estimate for 2022 is based on the change in the CPI from first
+quarter 2021 to first quarter 2022.</p>
+<pre class="r"><code>adj_cheese &lt;- cheese_yrs |&gt;
+  mutate(
+    adj_high_price = case_when(
+      yr == 2000 ~ high_price*271.0/172.2,
+      yr == 2001 ~ high_price*271.0/177.1,
+      yr == 2002 ~ high_price*271.0/179.9,
+      yr == 2003 ~ high_price*271.0/184.0,
+      yr == 2004 ~ high_price*271.0/188.9,
+      yr == 2005 ~ high_price*271.0/195.3,
+      yr == 2006 ~ high_price*271.0/201.6,
+      yr == 2007 ~ high_price*271.0/207.3,
+      yr == 2008 ~ high_price*271.0/215.3,
+      yr == 2009 ~ high_price*271.0/214.3,
+      yr == 2010 ~ high_price*271.0/218.1,
+      yr == 2011 ~ high_price*271.0/224.9,
+      yr == 2012 ~ high_price*271.0/229.6,
+      yr == 2013 ~ high_price*271.0/233.0,
+      yr == 2014 ~ high_price*271.0/236.7,
+      yr == 2015 ~ high_price*271.0/237.0,
+      yr == 2016 ~ high_price*271.0/240.0,
+      yr == 2017 ~ high_price*271.0/245.1,
+      yr == 2018 ~ high_price*271.0/251.1,
+      yr == 2019 ~ high_price*271.0/255.7,
+      yr == 2020 ~ high_price*271.0/258.8,
+      yr == 2021 ~ high_price*271.0/271.0,
+      yr == 2022 ~ high_price*271.0/294.4
+      ),
+  adj_low_price = case_when(
+      yr == 2000 ~ low_price*271.0/172.2,
+      yr == 2001 ~ low_price*271.0/177.1,
+      yr == 2002 ~ low_price*271.0/179.9,
+      yr == 2003 ~ low_price*271.0/184.0,
+      yr == 2004 ~ low_price*271.0/188.9,
+      yr == 2005 ~ low_price*271.0/195.3,
+      yr == 2006 ~ low_price*271.0/201.6,
+      yr == 2007 ~ low_price*271.0/207.3,
+      yr == 2008 ~ low_price*271.0/215.3,
+      yr == 2009 ~ low_price*271.0/214.3,
+      yr == 2010 ~ low_price*271.0/218.1,
+      yr == 2011 ~ low_price*271.0/224.9,
+      yr == 2012 ~ low_price*271.0/229.6,
+      yr == 2013 ~ low_price*271.0/233.0,
+      yr == 2014 ~ low_price*271.0/236.7,
+      yr == 2015 ~ low_price*271.0/237.0,
+      yr == 2016 ~ low_price*271.0/240.0,
+      yr == 2017 ~ low_price*271.0/245.1,
+      yr == 2018 ~ low_price*271.0/251.1,
+      yr == 2019 ~ low_price*271.0/255.7,
+      yr == 2020 ~ low_price*271.0/258.8,
+      yr == 2021 ~ low_price*271.0/271.0,
+      yr == 2022 ~ low_price*271.0/294.4
+    ))
+
+adj_cheese |&gt; summary() #checking columns</code></pre>
+<pre><code>##       date               region            high_price      low_price    
+##  Min.   :2000-01-03   Length:22367       Min.   :1.012   Min.   :0.980  
+##  1st Qu.:2003-12-15   Class :character   1st Qu.:1.958   1st Qu.:1.610  
+##  Median :2009-08-24   Mode  :character   Median :2.270   Median :1.920  
+##  Mean   :2010-04-30                      Mean   :2.366   Mean   :1.989  
+##  3rd Qu.:2016-06-13                      3rd Qu.:2.685   3rd Qu.:2.268  
+##  Max.   :2022-11-07                      Max.   :6.612   Max.   :4.290  
+##                                          NA&#39;s   :1       NA&#39;s   :1      
+##      type                 yr       adj_high_price  adj_low_price  
+##  Length:22367       Min.   :2000   Min.   :1.435   Min.   :1.114  
+##  Class :character   1st Qu.:2003   1st Qu.:2.437   1st Qu.:2.054  
+##  Mode  :character   Median :2009   Median :2.856   Median :2.357  
+##                     Mean   :2010   Mean   :2.953   Mean   :2.486  
+##                     3rd Qu.:2016   3rd Qu.:3.370   3rd Qu.:2.846  
+##                     Max.   :2022   Max.   :6.087   Max.   :4.800  
+##                                    NA&#39;s   :1       NA&#39;s   :1</code></pre>
+</div>
+<div id="checking-my-prices-with-a-calculator" class="section level3">
+<h3>Checking my prices with a calculator</h3>
+<p>Using this <a href="https://www.minneapolisfed.org/about-us/monetary-policy/inflation-calculator">inflation
+calculator</a> from the Minneapolis Federal Reserve Bank website, I want
+to make sure I did this right by checking my adjusted prices from 2005
+to 2021.</p>
+<pre class="r"><code>adj_cheese |&gt; 
+  filter(yr == 2005) |&gt; 
+  head(5)</code></pre>
+<div data-pagedtable="false">
+<script data-pagedtable-source type="application/json">
+{"columns":[{"label":["date"],"name":[1],"type":["date"],"align":["right"]},{"label":["region"],"name":[2],"type":["chr"],"align":["left"]},{"label":["high_price"],"name":[3],"type":["dbl"],"align":["right"]},{"label":["low_price"],"name":[4],"type":["dbl"],"align":["right"]},{"label":["type"],"name":[5],"type":["chr"],"align":["left"]},{"label":["yr"],"name":[6],"type":["dbl"],"align":["right"]},{"label":["adj_high_price"],"name":[7],"type":["dbl"],"align":["right"]},{"label":["adj_low_price"],"name":[8],"type":["dbl"],"align":["right"]}],"data":[{"1":"2005-12-26","2":"WISCONSIN","3":"2.265","4":"1.77","5":"CHEDDAR","6":"2005","7":"3.142934","8":"2.456068"},{"1":"2005-12-26","2":"WISCONSIN","3":"1.890","4":"1.67","5":"PROCESS AMERICAN","6":"2005","7":"2.622581","8":"2.317307"},{"1":"2005-12-26","2":"WISCONSIN","3":"2.890","4":"2.43","5":"SWISS","6":"2005","7":"4.010189","8":"3.371889"},{"1":"2005-12-26","2":"WISCONSIN","3":"2.000","4":"1.88","5":"BRICK","6":"2005","7":"2.775218","8":"2.608705"},{"1":"2005-12-26","2":"WISCONSIN","3":"2.265","4":"1.92","5":"MONTEREY JACK","6":"2005","7":"3.142934","8":"2.664209"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
+  </script>
+</div>
+<p>I tested these prices and the inflation checks out!</p>
+</div>
+<div id="remove-one-bad-row" class="section level3">
+<h3>Remove one bad row</h3>
+<p>First, I spoke with an expert on USDA reports about one row with an
+N/A price from 2018 - he said this row is a repeat leftover from
+combining the report.</p>
+<p>I’ll find that row here and get rid of it.</p>
+<pre class="r"><code>adj_cheese |&gt; 
+  filter(is.na(low_price)) #check to make sure only one row in this column has an N/A value</code></pre>
+<div data-pagedtable="false">
+<script data-pagedtable-source type="application/json">
+{"columns":[{"label":["date"],"name":[1],"type":["date"],"align":["right"]},{"label":["region"],"name":[2],"type":["chr"],"align":["left"]},{"label":["high_price"],"name":[3],"type":["dbl"],"align":["right"]},{"label":["low_price"],"name":[4],"type":["dbl"],"align":["right"]},{"label":["type"],"name":[5],"type":["chr"],"align":["left"]},{"label":["yr"],"name":[6],"type":["dbl"],"align":["right"]},{"label":["adj_high_price"],"name":[7],"type":["dbl"],"align":["right"]},{"label":["adj_low_price"],"name":[8],"type":["dbl"],"align":["right"]}],"data":[{"1":"2018-02-05","2":"NORTHEAST","3":"NA","4":"NA","5":"CHEDDAR","6":"2018","7":"NA","8":"NA"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
+  </script>
+</div>
+<pre class="r"><code>clean_adj_cheese &lt;- adj_cheese |&gt; 
+  drop_na() #removes all N/A rows
+
+clean_adj_cheese |&gt; glimpse() #check to make sure there is only one fewer row in the data - it should be 22,366</code></pre>
+<pre><code>## Rows: 22,366
+## Columns: 8
+## $ date           &lt;date&gt; 2000-12-25, 2000-12-25, 2000-12-25, 2000-12-25, 2000-1…
+## $ region         &lt;chr&gt; &quot;WISCONSIN&quot;, &quot;MIDWEST&quot;, &quot;MIDWEST&quot;, &quot;WISCONSIN&quot;, &quot;WISCON…
+## $ high_price     &lt;dbl&gt; 2.1150, 1.1925, 1.1450, 1.4800, 2.6850, 1.7375, 2.1150,…
+## $ low_price      &lt;dbl&gt; 1.4700, 1.1425, 1.1325, 1.3325, 2.0950, 1.4700, 1.6700,…
+## $ type           &lt;chr&gt; &quot;CHEDDAR&quot;, &quot;CHEDDAR&quot;, &quot;CHEDDAR&quot;, &quot;PROCESS AMERICAN&quot;, &quot;S…
+## $ yr             &lt;dbl&gt; 2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000, 2…
+## $ adj_high_price &lt;dbl&gt; 3.328484, 1.876699, 1.801945, 2.329152, 4.225523, 2.734…
+## $ adj_low_price  &lt;dbl&gt; 2.313415, 1.798011, 1.782274, 2.097024, 3.297009, 2.313…</code></pre>
+</div>
+</div>
+<div id="import-storage-data" class="section level2">
+<h2>Import storage data</h2>
+<pre class="r"><code>storage_dirty &lt;- read_csv(&quot;data-raw/comprehensive_storage.csv&quot;)</code></pre>
+<pre><code>## Rows: 1092 Columns: 21
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr  (9): Program, Period, Geo Level, State, watershed_code, Commodity, Data...
+## dbl  (1): Year
+## lgl (10): Week Ending, State ANSI, Ag District, Ag District Code, County, Co...
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+<div id="clean-storage-data" class="section level3">
+<h3>Clean storage data</h3>
+<pre class="r"><code>storage_clean &lt;- storage_dirty |&gt; 
+  clean_names() |&gt; 
+  mutate(
+    month_names = case_when(
+      period == &quot;END OF JAN&quot; ~ &quot;Jan&quot;,
+      period == &quot;END OF FEB&quot; ~ &quot;Feb&quot;,
+      period == &quot;END OF MAR&quot; ~ &quot;Mar&quot;,
+      period == &quot;END OF APR&quot; ~ &quot;Apr&quot;,
+      period == &quot;END OF MAY&quot; ~ &quot;May&quot;,
+      period == &quot;END OF JUN&quot; ~ &quot;Jun&quot;,
+      period == &quot;END OF JUL&quot; ~ &quot;Jul&quot;,
+      period == &quot;END OF AUG&quot; ~ &quot;Aug&quot;,
+      period == &quot;END OF SEP&quot; ~ &quot;Sep&quot;,
+      period == &quot;END OF OCT&quot; ~ &quot;Oct&quot;,
+      period == &quot;END OF NOV&quot; ~ &quot;Nov&quot;,
+      period == &quot;END OF DEC&quot; ~ &quot;Dec&quot;)
+) |&gt; 
+  mutate(month_use = as.factor(month_names)
+) |&gt; 
+  select(month_use, data_item, value, year)
+
+storage_clean |&gt; glimpse()</code></pre>
+<pre><code>## Rows: 1,092
+## Columns: 4
+## $ month_use &lt;fct&gt; Apr, Apr, Apr, Apr, Aug, Aug, Aug, Aug, Feb, Feb, Feb, Feb, …
+## $ data_item &lt;chr&gt; &quot;CHEESE, NATURAL, (EXCL AMERICAN &amp; SWISS), COLD STORAGE, CHI…
+## $ value     &lt;dbl&gt; 621150000, 835747000, 1480872000, 23975000, 618815000, 84153…
+## $ year      &lt;dbl&gt; 2022, 2022, 2022, 2022, 2022, 2022, 2022, 2022, 2022, 2022, …</code></pre>
+</div>
+</div>
+<div id="export-my-data" class="section level2">
+<h2>Export my data</h2>
+<pre class="r"><code>clean_adj_cheese |&gt; write_rds(&quot;data-processed/01-cleaning.rds&quot;)
+storage_clean |&gt; write_rds(&quot;data-processed/01-storage.rds&quot;)</code></pre>
 </div>
 
 

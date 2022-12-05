@@ -20,16 +20,6 @@ knit: (function(inputFile, encoding) { rmarkdown::render(
 
 [Analysis/Visuals notebook](https://athenahawkins.github.io/athena-final/02-analysis.html)
 
+- I'm still working on creating visualizations in my analysis notebook.
+
 - I created [this visualization](https://github.com/athenahawkins/athena-final/blob/main/plot2.pdf) for each types of cheese and their prices over time, adjusted for inflation.
-
-### Final visualizations
-
-I used Datawrapper to create the final visualizations after I reported my story. 
-
-- Here is my [storage holdings over time](https://www.datawrapper.de/_/ffQXL/) column chart
-- Here is my [milk vs. cheese consumption plot](https://www.datawrapper.de/_/V64A1/)
-- Here is my [cheese production plot](https://www.datawrapper.de/_/ysmFF/)
-
-### Final written story
-
-- Here is the link to my final story.

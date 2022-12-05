@@ -8,10 +8,7 @@ knit: (function(inputFile, encoding) { rmarkdown::render(inputFile, encoding = e
 
 ## Goals of this Notebook
 
-- Import cheese price data
-- Import cheese storage data
-- Import production data
-- Import milk/cheese consumption data
+- Import all my cheese data
 - Clean names and dates
 - Write the cleaned data
 
@@ -22,12 +19,6 @@ I collected cheese price data from the [United States Department of Agriculture 
 In addition to price data, I want to look at USDA data on the government's cheese storage holdings. I'll import that here and use it to compare in my analysis. Storage holdings data is in units of pounds, and comes from the USDA National Agricultural Statistics Service [Cold Storage Report](https://quickstats.nass.usda.gov/results/172E17CF-AD11-37D8-949A-0624FA6A9CD0).
 
 You check out these [FAQs](https://mymarketnews.ams.usda.gov/faqs) about USDA market data.
-
-## Updating the data
-
-As I reported my story, I realized I need to look at American cheese production by pound as well. I downloaded cheese production data by state from the same database as my storage data, the National Agricultural Statistics Service within the USDA.
-
-Similarly, I added consumption data for milk and cheese in pounds consumed per capita. This data came from the dairy consumption annual report from the USDA website.
 
 ## Setup
 
@@ -221,52 +212,9 @@ storage_clean <- storage_dirty |>
 storage_clean |> glimpse()
 ```
 
-## Import production data
-
-Here, I'll import my production data and clean it.
-
-```{r prod_import}
-production_dirty <- read_csv("data-raw/cheese_production.csv")
-```
-### Clean production data
-
-There are NA values for Oregon in 2015 and New Jeresey in 2013 which are counted in other states, so I'm removing those rows.
-
-```{r clean_production}
-production_clean <- production_dirty |> 
-  clean_names() |> 
-  select(data_item, period, value, state, year) |> 
-  filter(period == "YEAR") |> 
-  drop_na() #removes rows with NA value
-
-production_clean |> summary()
-```
-
-## Import consumption data
-
-Since this file came in a poorly formatted Excel, I had to clean it up in Excel before importing here. I'll still clean names.
-
-```{r consum}
-library(readxl)
-
-consum_dirty <- read_excel("data-raw/consum_cleaner.xlsx")
-```
-
-I'll still clean names and select just milk and cheese consumption.
-
-```{r consum}
-consum_clean <- consum_dirty |> 
-  clean_names() |> 
-  select(year, fluid_beverage_milk, american_type, other_than_american, cottage)
-
-consum_clean |> glimpse()
-```
-
 ## Export my data
 
 ```{r export}
 clean_adj_cheese |> write_rds("data-processed/01-cleaning.rds")
 storage_clean |> write_rds("data-processed/01-storage.rds")
-production_clean |> write_rds("data-processed/01-production.rds")
-consum_clean |> write_rds("data-processed/01-consumption.rds")
 ```

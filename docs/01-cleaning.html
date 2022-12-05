@@ -1640,7 +1640,10 @@ pre code {
 <div id="goals-of-this-notebook" class="section level2">
 <h2>Goals of this Notebook</h2>
 <ul>
-<li>Import all my cheese data</li>
+<li>Import cheese price data</li>
+<li>Import cheese storage data</li>
+<li>Import production data</li>
+<li>Import milk/cheese consumption data</li>
 <li>Clean names and dates</li>
 <li>Write the cleaned data</li>
 </ul>
@@ -1650,12 +1653,25 @@ pre code {
 <p>I collected cheese price data from the <a href="https://mymarketnews.ams.usda.gov/public_data">United States
 Department of Agriculture (USDA)</a>. It ranges from 2000 to 2022, and
 covers the region categories of Wisconsin, Western U.S., Midwestern U.S.
-and the Northeastern U.S. region.</p>
+and the Northeastern U.S. region. The prices are in units of dollars per
+pound.</p>
 <p>In addition to price data, I want to look at USDA data on the
 government’s cheese storage holdings. I’ll import that here and use it
-to compare in my analysis.</p>
-<p>The prices come in dollars per pound. You check out these <a href="https://mymarketnews.ams.usda.gov/faqs">FAQs</a> about USDA market
+to compare in my analysis. Storage holdings data is in units of pounds,
+and comes from the USDA National Agricultural Statistics Service <a href="https://quickstats.nass.usda.gov/results/172E17CF-AD11-37D8-949A-0624FA6A9CD0">Cold
+Storage Report</a>.</p>
+<p>You check out these <a href="https://mymarketnews.ams.usda.gov/faqs">FAQs</a> about USDA market
 data.</p>
+</div>
+<div id="updating-the-data" class="section level2">
+<h2>Updating the data</h2>
+<p>As I reported my story, I realized I need to look at American cheese
+production by pound as well. I downloaded cheese production data by
+state from the same database as my storage data, the National
+Agricultural Statistics Service within the USDA.</p>
+<p>Similarly, I added consumption data for milk and cheese in pounds
+consumed per capita. This data came from the dairy consumption annual
+report from the USDA website.</p>
 </div>
 <div id="setup" class="section level2">
 <h2>Setup</h2>
@@ -2623,10 +2639,10 @@ clean_adj_cheese |&gt; glimpse() #check to make sure there is only one fewer row
       period == &quot;END OF JUN&quot; ~ &quot;Jun&quot;,
       period == &quot;END OF JUL&quot; ~ &quot;Jul&quot;,
       period == &quot;END OF AUG&quot; ~ &quot;Aug&quot;,
-      period == &quot;END OF JAN&quot; ~ &quot;Sep&quot;,
-      period == &quot;END OF JAN&quot; ~ &quot;Oct&quot;,
-      period == &quot;END OF JAN&quot; ~ &quot;Nov&quot;,
-      period == &quot;END OF JAN&quot; ~ &quot;Dec&quot;)
+      period == &quot;END OF SEP&quot; ~ &quot;Sep&quot;,
+      period == &quot;END OF OCT&quot; ~ &quot;Oct&quot;,
+      period == &quot;END OF NOV&quot; ~ &quot;Nov&quot;,
+      period == &quot;END OF DEC&quot; ~ &quot;Dec&quot;)
 ) |&gt; 
   mutate(month_use = as.factor(month_names)
 ) |&gt; 
@@ -2641,10 +2657,75 @@ storage_clean |&gt; glimpse()</code></pre>
 ## $ year      &lt;dbl&gt; 2022, 2022, 2022, 2022, 2022, 2022, 2022, 2022, 2022, 2022, …</code></pre>
 </div>
 </div>
+<div id="import-production-data" class="section level2">
+<h2>Import production data</h2>
+<p>Here, I’ll import my production data and clean it.</p>
+<pre class="r"><code>production_dirty &lt;- read_csv(&quot;data-raw/cheese_production.csv&quot;)</code></pre>
+<pre><code>## Warning: One or more parsing issues, see `problems()` for details</code></pre>
+<pre><code>## Rows: 7369 Columns: 21
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr (10): Program, Period, Geo Level, State, State ANSI, watershed_code, Com...
+## dbl  (1): Year
+## lgl  (9): Week Ending, Ag District, Ag District Code, County, County ANSI, Z...
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+<div id="clean-production-data" class="section level3">
+<h3>Clean production data</h3>
+<p>There are NA values for Oregon in 2015 and New Jeresey in 2013 which
+are counted in other states, so I’m removing those rows.</p>
+<pre class="r"><code>production_clean &lt;- production_dirty |&gt; 
+  clean_names() |&gt; 
+  select(data_item, period, value, state, year) |&gt; 
+  filter(period == &quot;YEAR&quot;) |&gt; 
+  drop_na() #removes rows with NA value
+
+production_clean |&gt; summary()</code></pre>
+<pre><code>##   data_item            period              value              state          
+##  Length:1094        Length:1094        Min.   :5.480e+05   Length:1094       
+##  Class :character   Class :character   1st Qu.:4.177e+07   Class :character  
+##  Mode  :character   Mode  :character   Median :1.025e+08   Mode  :character  
+##                                        Mean   :3.498e+08                     
+##                                        3rd Qu.:3.477e+08                     
+##                                        Max.   :3.474e+09                     
+##       year     
+##  Min.   :1970  
+##  1st Qu.:1978  
+##  Median :1988  
+##  Mean   :1991  
+##  3rd Qu.:2002  
+##  Max.   :2021</code></pre>
+</div>
+</div>
+<div id="import-consumption-data" class="section level2">
+<h2>Import consumption data</h2>
+<p>Since this file came in a poorly formatted Excel, I had to clean it
+up in Excel before importing here. I’ll still clean names.</p>
+<pre class="r"><code>library(readxl)
+
+consum_dirty &lt;- read_excel(&quot;data-raw/consum_cleaner.xlsx&quot;)
+
+consum_clean &lt;- consum_dirty |&gt; 
+  clean_names() |&gt; 
+  drop_na() |&gt; 
+  select(year, fluid_beverage_milk, american_type, other_than_american, cottage)
+
+consum_clean |&gt; glimpse()</code></pre>
+<pre><code>## Rows: 47
+## Columns: 5
+## $ year                &lt;dbl&gt; 1975, 1976, 1977, 1978, 1979, 1980, 1981, 1982, 19…
+## $ fluid_beverage_milk &lt;dbl&gt; 247, 247, 244, 241, 238, 234, 230, 224, 223, 224, …
+## $ american_type       &lt;dbl&gt; 8.147222, 8.883106, 9.213005, 9.525359, 9.597205, …
+## $ other_than_american &lt;dbl&gt; 6.126409, 6.627872, 6.781846, 7.309603, 7.567657, …
+## $ cottage             &lt;dbl&gt; 4.588537, 4.632284, 4.617711, 4.600490, 4.434472, …</code></pre>
+</div>
 <div id="export-my-data" class="section level2">
 <h2>Export my data</h2>
 <pre class="r"><code>clean_adj_cheese |&gt; write_rds(&quot;data-processed/01-cleaning.rds&quot;)
-storage_clean |&gt; write_rds(&quot;data-processed/01-storage.rds&quot;)</code></pre>
+storage_clean |&gt; write_rds(&quot;data-processed/01-storage.rds&quot;)
+production_clean |&gt; write_rds(&quot;data-processed/01-production.rds&quot;)
+consum_clean |&gt; write_rds(&quot;data-processed/01-consumption.rds&quot;)</code></pre>
 </div>
 
 
