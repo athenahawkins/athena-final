@@ -2472,8 +2472,7 @@ Consumer Price Index for Urban Consumers, or CPI-U</a> from the Bureau
 of Labor Statistics to calculate each year’s cheese prices adjusted to
 2015 dollars. First, I need to make a year column.</p>
 <pre class="r"><code>cheese_yrs &lt;- cheese_clean |&gt;
-  mutate(
-    yr = year(date))
+  mutate(yr = year(date))
 
 cheese_yrs |&gt; summary()</code></pre>
 <pre><code>##       date               region            high_price      low_price    
@@ -2704,21 +2703,21 @@ production_clean |&gt; summary()</code></pre>
 up in Excel before importing here. I’ll still clean names.</p>
 <pre class="r"><code>library(readxl)
 
-consum_dirty &lt;- read_excel(&quot;data-raw/consum_cleaner.xlsx&quot;)
-
-consum_clean &lt;- consum_dirty |&gt; 
+consum_dirty &lt;- read_excel(&quot;data-raw/consum_cleaner.xlsx&quot;)</code></pre>
+<p>I’ll still clean names and select just milk and cheese
+consumption.</p>
+<pre class="r"><code>consum_clean &lt;- consum_dirty |&gt; 
   clean_names() |&gt; 
-  drop_na() |&gt; 
   select(year, fluid_beverage_milk, american_type, other_than_american, cottage)
 
 consum_clean |&gt; glimpse()</code></pre>
-<pre><code>## Rows: 47
+<pre><code>## Rows: 48
 ## Columns: 5
-## $ year                &lt;dbl&gt; 1975, 1976, 1977, 1978, 1979, 1980, 1981, 1982, 19…
-## $ fluid_beverage_milk &lt;dbl&gt; 247, 247, 244, 241, 238, 234, 230, 224, 223, 224, …
-## $ american_type       &lt;dbl&gt; 8.147222, 8.883106, 9.213005, 9.525359, 9.597205, …
-## $ other_than_american &lt;dbl&gt; 6.126409, 6.627872, 6.781846, 7.309603, 7.567657, …
-## $ cottage             &lt;dbl&gt; 4.588537, 4.632284, 4.617711, 4.600490, 4.434472, …</code></pre>
+## $ year                &lt;dbl&gt; NA, 1975, 1976, 1977, 1978, 1979, 1980, 1981, 1982…
+## $ fluid_beverage_milk &lt;dbl&gt; NA, 247, 247, 244, 241, 238, 234, 230, 224, 223, 2…
+## $ american_type       &lt;dbl&gt; NA, 8.147222, 8.883106, 9.213005, 9.525359, 9.5972…
+## $ other_than_american &lt;dbl&gt; NA, 6.126409, 6.627872, 6.781846, 7.309603, 7.5676…
+## $ cottage             &lt;dbl&gt; NA, 4.588537, 4.632284, 4.617711, 4.600490, 4.4344…</code></pre>
 </div>
 <div id="export-my-data" class="section level2">
 <h2>Export my data</h2>

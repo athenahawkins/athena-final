@@ -93,8 +93,7 @@ Now I want to adjust my prices for inflation. I'll be using the [average yearly 
 
 ```{r yr}
 cheese_yrs <- cheese_clean |>
-  mutate(
-    yr = year(date))
+  mutate(yr = year(date))
 
 cheese_yrs |> summary()
 ```
@@ -178,7 +177,7 @@ First, I spoke with an expert on USDA reports about one row with an N/A price fr
 
 I'll find that row here and get rid of it.
 
-```{r}
+```{r adj}
 adj_cheese |> 
   filter(is.na(low_price)) #check to make sure only one row in this column has an N/A value
 
@@ -254,7 +253,7 @@ consum_dirty <- read_excel("data-raw/consum_cleaner.xlsx")
 
 I'll still clean names and select just milk and cheese consumption.
 
-```{r consum}
+```{r consum_clean}
 consum_clean <- consum_dirty |> 
   clean_names() |> 
   select(year, fluid_beverage_milk, american_type, other_than_american, cottage)
